@@ -1,0 +1,5 @@
+pyhunter
+pyfiglet
+requests
+cloudscraper
+
