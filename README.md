@@ -52,10 +52,8 @@ optional arguments:
   -m MANGLEMODE         Mangle Mode (use '-mo' to list mangle options)
   -mo                   List Mangle Mode Options
 ```
+## Examples
 
-------------------------------------------------------------------------------------
-Examples
-------------------------------------------------------------------------------------
 ```
 ./NameSpi.py -o MyOutput -li
 ./NameSpi.py -o MyOutput -li -zi
