@@ -1,4 +1,4 @@
-NameSpi
+# NameSpi
 ------------------------------------------------------------------------------------
 This tool is stil in development. Please read the README before using NameSpi
 
@@ -9,7 +9,7 @@ This tool is designed to create a list of employees for the company of your choi
 - The script also cleans up the names, removes duplicates, and mangles to the mode that you want.
 
 ------------------------------------------------------------------------------------
-Usage
+# Usage
 ------------------------------------------------------------------------------------
 ```
 $ ./NameSpi.py -h
@@ -61,7 +61,7 @@ optional arguments:
 ```
 
 ------------------------------------------------------------------------------------
-Scraping Options
+# Scraping Options
 ------------------------------------------------------------------------------------
 Options like the LinkedIn Username and Password, ZoomInfo Link, Hunter.io API Key, Hunter.io Domain Name, and Company name do not need to be in the command itself, the script will ask for those if you have selected the options to run those modules.
 
@@ -86,7 +86,7 @@ Hunter.io API Key:
 ```
 
 ------------------------------------------------------------------------------------
-Mangle Modes
+# Mangle Modes
 ------------------------------------------------------------------------------------
 If you want something else, use mode 0 and mangle it yourself.  
 Mangle Modes included:
