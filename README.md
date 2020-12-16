@@ -1,12 +1,14 @@
 # NameSpi
-
-This tool is stil in development. Please read the README before using NameSpi
+### PLEASE report any recommendations, issues, etc to me. Best way to reach me is keybase @waffless  
+### This tool is stil in development. Please read the README before using NameSpi
 
 This tool is designed to create a list of employees for the company of your choice. It pulls from your choices of LinkedIn, ZoomInfo, and Hunter.io.
 - The LinkedIn functionality pulls employees from the company LinkedIn page based on your connections. The more connections you have the better.
 - The ZoomInfo functionality pulls employees based on the URL provided. Provide the target company's ZoomInfo link and youll get back 125 unique names.
 - The Hunter.io functionality pulls employees email addresses based on your subscription level. The Free version only allows 10. This will also identify the email format if you plan on mangeling names for password guessing.
 - The script also cleans up the names, removes duplicates, and mangles to the mode that you want.
+
+**HINT:** You do not need to supply EVERY option in the command itself. The required option is the output (-o), if you supply any of the collection methods after that (-li, -zi, -hio) and nothing else, the script will ask for the information it required to complete the function. This is also mentioned below in the **Scraping Options** header.
 
 ------------------------------------------------------------------------------------
 # Usage
