@@ -211,15 +211,14 @@ def getZISession(companyLink, pageNum):
 	try:
 		zoomInfoGetPage = zoomInfoSessionFirefox.get(getURL, allow_redirects=True)
 	except cloudscraper.exceptions.CloudflareChallengeError as e:
-		time.sleep(1)
+		time.sleep(3)
 		try:
 			zoomInfoGetPage = zoomInfoSessionFirefox.get(getURL, allow_redirects=True)
 		except:
-			time.sleep(2)
+			time.sleep(5)
 			try:
 				zoomInfoGetPage = zoomInfoSessionFirefox.get(getURL, allow_redirects=True)
 			except Exception as e:
-				#print(e)
 				pass
 	if zoomInfoGetPage != '':
 		return zoomInfoGetPage
@@ -227,14 +226,19 @@ def getZISession(companyLink, pageNum):
 def extractZINames(companyLink, outputFileName):
 	for pageNum in range(1, 6):
 		zoomInfoGetPage = getZISession(companyLink, pageNum)
-		zoomInfoResponseSplit = zoomInfoGetPage.text.split('</a>')
-		for line in zoomInfoResponseSplit:
-			if 'tableRow_personName' in line:
-				personName = line.split('class="link amplitudeElement">')[1]
-				file = open(outputFileName,"a+")
+		zoomInfoResponseSplit = zoomInfoGetPage.text.split('<script id="app-root-state" type="application/json">')
+		zoomInfoResponseSplit2 = zoomInfoResponseSplit[1].split('</script>')[0]
+		zoomInfoResponseSplit2 = zoomInfoResponseSplit2.replace('&q;','"').replace('&a;','&').replace('&s;','\'').replace('&l;','<').replace('&g;','>')
+		zoomInfoJson = json.loads(zoomInfoResponseSplit2)
+		for n in range(25):
+			personName = zoomInfoJson["pic-"]["picParsedData"]["table"]["data"][n][1]["fullName"]
+			if printnames:
+				print(str(personName))
+			if outputFileName != '':
+				file = open(outputfiletemp,"a+")
 				print(personName, file = file)
 				file.close()
-		time.sleep(2)
+		time.sleep(3)
 
 def linkedInGen():
 	if (companyid == '' or companyid is None):
@@ -405,7 +409,7 @@ def mangler(mangleMode, outputfile):
 			firstPart = name.split(" ")[0]
 			lastPart = name.split(" ")[1][:1]
 			mangledName = str(firstPart.strip()) + str(lastPart.strip())
-		
+
 		if printnames and mangleMode == 0:
 			print(name.strip())
 		elif printnames and mangleMode > 0:
@@ -415,7 +419,7 @@ def mangler(mangleMode, outputfile):
 			print(mangledName, file = fileOutput)
 
 def main_generator():
-	global outputfile 
+	global outputfile
 	global mangleMode
 
 	if linkedingen:
