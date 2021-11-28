@@ -1,5 +1,4 @@
-pyhunter
-pyfiglet
-requests
+beautifulsoup4
 cloudscraper
-
+pyhunter
+requests
