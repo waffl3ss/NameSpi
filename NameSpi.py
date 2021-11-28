@@ -22,7 +22,7 @@ banner = """
 print(banner)
 
 # Parse user arguments
-parser = argparse.ArgumentParser(description=banner, formatter_class=RawTextHelpFormatter)
+parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
 parser.add_argument('-li', dest='linkedingen', default=False, required=False, help="Run the LinkedIn module", action='store_true')
 parser.add_argument('-zi', dest='zipull', required=False, default=False, help="Pull ZoomInfo Employee Names", action='store_true')
 parser.add_argument('-hio', dest='hunterIO', required=False, default=False, help="Pull Emails from Hunter.io", action='store_true')
