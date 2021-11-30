@@ -26,13 +26,12 @@ parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
 parser.add_argument('-li', dest='linkedingen', default=False, required=False, help="Run the LinkedIn module", action='store_true')
 parser.add_argument('-zi', dest='zipull', required=False, default=False, help="Pull ZoomInfo Employee Names", action='store_true')
 parser.add_argument('-hio', dest='hunterIO', required=False, default=False, help="Pull Emails from Hunter.io", action='store_true')
-parser.add_argument('-uss', dest='usstaff', required=False, default=False, help="Pull Names from USStaff", action='store_true')
+parser.add_argument('-uss', dest='usstaff', required=False, default=False, help="Pull Names from USStaff (https://bearsofficialsstore.com/)", action='store_true')
 parser.add_argument('-o', dest='outputfile', required=False, default='', help="Write output to file")
 parser.add_argument('-pn', dest='printnames', required=False, default=False, help="Print found names to screen", action='store_true')
 parser.add_argument('-c', dest='company', default='', required=False, help="Company to search for")
 parser.add_argument('-id', dest='companyid', required=False, help="Company ID to search for")
 parser.add_argument('-s', dest='sleep', default=5, required=False, help="Time to sleep between requests")
-#parser.add_argument('-mr', dest='max_requests', default=200, required=False, help="Max number of requests per title while searching, use 0 for unlimited")
 parser.add_argument('-t', dest='timeout', required=False, default=5, help="HTTP Request timeout")
 parser.add_argument('-user', dest='linkedin_username', required=False, help="LinkedIn.com Authenticated Username")
 parser.add_argument('-pass', dest='linkedin_password', required=False, help="LinkedIn.com Authenticated Password")
@@ -50,7 +49,6 @@ args = parser.parse_args()
 company = str(args.company) # String
 companyid = args.companyid # Int
 sleep = int(args.sleep) # Int
-#max_requests = int(args.max_requests) # Int
 timeout = int(args.timeout) # Int
 outputfile = str(args.outputfile) # String
 zipull = args.zipull # Bool
