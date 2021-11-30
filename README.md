@@ -6,7 +6,7 @@ This tool is designed to create a list of employees for the company of your choi
 - The LinkedIn functionality pulls employees from the company LinkedIn page based on your connections. The more connections you have the better.
 - The ZoomInfo functionality pulls employees based on the URL provided. Provide the target company's ZoomInfo link and youll get back up to 125 unique names.
 - The Hunter.io functionality pulls employees names based on your subscription level. The Free version only allows 10. This will also identify the email format if you plan on mangeling names for password guessing.
-- The USStaff functionality pulls employee names from bearsofficialsstore.com
+- The USStaff functionality pulls employee names from https://bearsofficialsstore.com/
 - The script also cleans up the names, removes duplicates, and can mangle to the output you want.
 
 - ZoomInfo can be picky with how many times an IP can hit the employee names portion. Therefore, the ZoomInfo portion is ProxyAware with the `-proxy` or `-proxyfile` options. Make sure to include the type of proxy (i.e. `socks5://127.0.0.1:1080`)
@@ -52,7 +52,7 @@ optional arguments:
                           (eg: https://www.zoominfo.com/pic/google-inc/16400573
   -hapi HUNTERAPIKEY    Hunter.io API Key
   -hdom HUNTERDOMAIN    Domain to query in Hunter.io
-  -uc USSTAFFCOMPANY    Exact company name on USStaff
+  -uc USSTAFFCOMPANY    Exact company name on USStaff (https://bearsofficialsstore.com/)
   -proxy SINGLEPROXY    Use with [TYPE]://[IP]:[PORT]
   -proxyfile PROXYLIST  File with newline seperate proxies. Each proxy must have the type
                           i.e. socks5://127.0.0.1:1080
