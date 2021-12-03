@@ -1,5 +1,6 @@
 # NameSpi
-### PLEASE report any recommendations, issues, etc to me. Best way to reach me is keybase @waffless  
+### PLEASE report any recommendations, issues, etc to me. Best way to reach me is keybase @waffless ... Im new to the github issues thing but ill get around to it if you post it there
+
 ### This tool is stil in development. Please read the README before using NameSpi. If you submit an 'issue' that is labeled in the README, I will call you stupid and close it.
 
 This tool is designed to create a list of employees for the company of your choice. It pulls from your choices of LinkedIn, ZoomInfo, USStaff, and Hunter.io.
