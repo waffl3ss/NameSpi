@@ -8,7 +8,7 @@ This tool is designed to create a list of employees for the company of your choi
 - The ZoomInfo functionality pulls employees based on the URL provided. Provide the target company's ZoomInfo link and youll get back up to 125 unique names.
 - The Hunter.io functionality pulls employees names based on your subscription level. The Free version only allows 10. This will also identify the email format if you plan on mangeling names for password guessing.
 - The USStaff functionality pulls employee names from https://bearsofficialsstore.com/
-- The script also cleans up the names, removes duplicates, and can mangle to the output you want.
+- The script also cleans up the names, removes duplicates, removes accesnts, changes capitalization for uniformity, and can mangle to the output you want (6 options built in).
 
 - ZoomInfo can be picky with how many times an IP can hit the employee names portion. Therefore, the ZoomInfo portion is ProxyAware with the `-proxy` or `-proxyfile` options. Make sure to include the type of proxy (i.e. `socks5://127.0.0.1:1080`)
 
