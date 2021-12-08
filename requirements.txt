@@ -3,3 +3,4 @@ bs4
 cloudscraper
 pyhunter
 requests
+unidecode
