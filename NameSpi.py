@@ -8,7 +8,7 @@ from argparse import RawTextHelpFormatter
 from pyhunter import PyHunter
 from bs4 import BeautifulSoup
 from itertools import cycle
-import time, json, math, ssl, argparse, re, sys, os, codecs, hashlib, hmac, base64, urllib, requests, cloudscraper, getpass, random
+import time, json, math, ssl, argparse, re, sys, os, codecs, hashlib, hmac, base64, urllib, requests, cloudscraper, getpass, random, unidecode
 
 banner = """
   _   _                      ____        _ 
@@ -115,6 +115,7 @@ zoomInfoNamesList = []
 linkedInNamesList = []
 hunterNamesList = []
 usStaffNamesList = []
+printNamesModifierList = []
 printNamesFullList = []
 mangledNamesList = []
 mangledPrintNamesList = []
@@ -542,9 +543,11 @@ def main_generator():
 		print(bcolors.NONERED + "[!] No names obtained, Exiting...\n" + bcolors.ENDLINE)
 		sys.exit()
 
-	printNamesFullList = linkedInNamesList + zoomInfoNamesList + hunterNamesList + usStaffNamesList
-	printNamesFullList = list(set(printNamesFullList))
-
+	printNamesModifierList = linkedInNamesList + zoomInfoNamesList + hunterNamesList + usStaffNamesList
+	printNamesModifierList = list(set(printNamesModifierList))
+	for potentialName in printNamesModifierList:
+		finalPotentialName = unidecode.unidecode(potentialName.capitalize())
+		printNamesFullList.append(str(finalPotentialName))
 	mangler(mangleMode, printNamesFullList)
 
 	totalPotentialUsers = len(printNamesFullList)
