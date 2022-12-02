@@ -8,7 +8,10 @@ from argparse import RawTextHelpFormatter
 from pyhunter import PyHunter
 from bs4 import BeautifulSoup
 from itertools import cycle
-import time, json, math, ssl, argparse, re, sys, os, codecs, hashlib, hmac, base64, urllib, requests, cloudscraper, getpass, random, unidecode
+import time, json, math, ssl, argparse, re, sys, os, codecs, hashlib, hmac, base64, urllib, requests, cloudscraper, getpass, random, unidecode, httpimport, yaml
+
+with httpimport.remote_repo('https://raw.githubusercontent.com/IntelligenceX/SDK/master/Python/'):
+	from intelxapi import intelx
 
 banner = """
   _   _                      ____        _ 
@@ -16,9 +19,9 @@ banner = """
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
  | |\  | (_| | | | | | |  __/___) | |_) | | 
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v0.9
-             Author: #Waffl3ss
-         Special Thanks: #bigb0sss\n\n"""
+                                  |_| v1.0 
+             Author: #Waffl3ss 
+         Special Thanks: #bigb0sss \n\n"""
 print(banner)
 
 # Parse user arguments
@@ -27,6 +30,9 @@ parser.add_argument('-li', dest='linkedingen', default=False, required=False, he
 parser.add_argument('-zi', dest='zipull', required=False, default=False, help="Pull ZoomInfo Employee Names", action='store_true')
 parser.add_argument('-hio', dest='hunterIO', required=False, default=False, help="Pull Emails from Hunter.io", action='store_true')
 parser.add_argument('-uss', dest='usstaff', required=False, default=False, help="Pull Names from USStaff (https://bearsofficialsstore.com/)", action='store_true')
+parser.add_argument('-pb', dest='phonebookCZ', required=False, default=False, help="Pull Names from Phonebook.CZ", action='store_true')
+parser.add_argument('-pbdom', dest='phonebookTargetDomain', required=False, help="Domain to query Phonebook")
+parser.add_argument('-iapi', dest='intelAPIKey', required=False, help="IntelX API Key")
 parser.add_argument('-o', dest='outputfile', required=False, default='', help="Write output to file")
 parser.add_argument('-pn', dest='printnames', required=False, default=False, help="Print found names to screen", action='store_true')
 parser.add_argument('-c', dest='company', default='', required=False, help="Company to search for")
@@ -37,12 +43,13 @@ parser.add_argument('-user', dest='linkedin_username', required=False, help="Lin
 parser.add_argument('-pass', dest='linkedin_password', required=False, help="LinkedIn.com Authenticated Password")
 parser.add_argument('-zilink', dest='zilink', required=False, help="ZoomInfo Company Employee Link\n  (eg: https://www.zoominfo.com/pic/google-inc/16400573")
 parser.add_argument('-hapi', dest='hunterApiKey', required=False, help="Hunter.io API Key")
-parser.add_argument('-hdom', dest='hunterDomain', required=False, help="Domain to query in Hunter.io") 
+parser.add_argument('-hdom', dest='hunterDomain', required=False, help="Domain to query in Hunter.io")
 parser.add_argument('-uc', dest='usstaffcompany', default='', required=False, help="Exact company name on USStaff")
 parser.add_argument('-proxy', dest='singleproxy', default='None', required=False, help="Use with [TYPE]://[IP]:[PORT]")
 parser.add_argument('-proxyfile' , dest='proxylist', default='None', required=False, help="File with newline seperate proxies. Each proxy must have the type\n  i.e. socks5://127.0.0.1:1080")
 parser.add_argument('-m', dest='mangleMode', required=False, default=0, help="Mangle Mode (use '-mo' to list mangle options). Only works with an output file (-o)")
 parser.add_argument('-mo', dest='mangleOptions', required=False, default=False, help="List Mangle Mode Options", action="store_true")
+parser.add_argument('-yaml', dest='useyamlfile', required=False, default='', help="Use YAML input file with options")
 args = parser.parse_args()
 
 # Assign user arguments to variables we can use
@@ -66,6 +73,18 @@ usstaff = args.usstaff # Bool
 usstaffcompany = str(args.usstaffcompany) # String
 singleproxy = str(args.singleproxy) # String
 proxylist = str(args.proxylist) # String
+phonebookCZ = args.phonebookCZ # Bool
+phonebookTargetDomain = str(args.phonebookTargetDomain) # String
+intelAPIKey = str(args.intelAPIKey) # String
+useyamlfile = str(args.useyamlfile) # Bool
+
+# Colors for terminal output because Waffles likes pretty things
+class bcolors:
+        OKGREEN = '\033[92m'
+        BOLD = '\033[1m'
+        NONERED = '\033[91m'
+        ENDLINE = '\033[0m'
+        UNDERLINE = '\033[4m'
 
 if mangleOptions:
 	print('  Available Mangle Modes:')
@@ -75,37 +94,116 @@ if mangleOptions:
 	print('	  3 = <FIRST>.<L>')
 	print('	  4 = <FIRST><LAST>')
 	print('	  5 = <F><LAST>')
-	print('	  6 = <FIRST><L>\n')
+	print('	  6 = <FIRST><L>')
+	print('	  7 = <LAST><F>')
+	print('	  8 = <FIRST>_<LAST>')
+	print('	  9 = <LAST>_<FIRST>')
+	print('	  10 = <LAST>.<F>\n')
 	sys.exit()
 
-if linkedingen and args.companyid is None and args.company == '':
-	company = input("Company Name: ")
-if linkedingen and args.linkedin_username is None:
-	linkedin_username = input("LinkedIn Username: ")
-if linkedingen and args.linkedin_password is None:
-	linkedin_password = getpass.getpass("LinkedIn Password: ")
-if zipull and args.zilink is None:
-	zilink = input("ZoomInfo Link: ")
-if hunterIO and args.hunterDomain is None:
-	hunterDomain = input("Hunter.io Domain to Query: ")
-if hunterIO and args.hunterApiKey is None:
-	hunterApiKey = input("Hunter.io API Key: ")
-if usstaff and args.usstaffcompany == '':
-	usstaffcompany = input("USStaff Name: ")
+if useyamlfile != '':
+	if os.path.exists(useyamlfile):
+		with open(useyamlfile, 'r') as yamlfile:
+			yamlcontents = yaml.safe_load(yamlfile)
+			print(yamlcontents)
+
+		if linkedingen and yamlcontents["CompanyID"] == '' and yamlcontents["CompanyName"] != '':
+			company = yamlcontents["CompanyName"]
+		elif linkedingen and args.companyid is None and args.company == '':
+			company = input("Company Name: ")
+		elif linkedingen and yamlcontents["CompanyID"] != '':
+			companyid = yamlcontents["CompanyID"]
+		else:
+			print(bcolors.NONERED + '[!] YAML Error getting Company Name... ' + bcolors.ENDLINE)
+
+		if linkedingen and yamlcontents["LinkedInUsername"] != '':
+			linkedin_username = yamlcontents["LinkedInUsername"]
+		elif linkedingen and args.linkedin_username is None:
+			linkedin_username = input("LinkedIn Username: ")
+		else:
+			print(bcolors.NONERED + '[!] YAML Error with LinkedIn Username... ' + bcolors.ENDLINE)
+
+		if linkedingen and yamlcontents["LinkedInPassword"] != '':
+			linkedin_password = yamlcontents["LinkedInPassword"]
+		elif linkedingen and args.linkedin_password is None:
+			linkedin_password = getpass.getpass("LinkedIn Password: ")
+		else:
+			print(bcolors.NONERED + '[!] YAML Error with LinkedIn Password... ' + bcolors.ENDLINE)
+
+		if zipull and yamlcontents["ZoomInfoLink"] != '':
+			zilink = yamlcontents["ZoomInfoLink"]
+		elif zipull and args.zilink is None:
+			zilink = input("ZoomInfo Link: ")
+		else:
+			print(bcolors.NONERED + '[!] YAML Error with Zoominfo Link... ' + bcolors.ENDLINE)
+
+		if hunterIO and yamlcontents["HunterIODomain"] != '':
+			hunterDomain = yamlcontents["HunterIODomain"]
+		elif hunterIO and args.hunterDomain is None:
+			hunterDomain = input("Hunter.io Domain to Query: ")
+		else:
+			print(bcolors.NONERED + '[!] YAML Error with HunterIO Domain... ' + bcolors.ENDLINE)
+
+		if hunterIO and yamlcontents["HunterIOKey"] != '':
+			hunterApiKey = yamlcontents["HunterIOKey"]
+		elif hunterIO and args.hunterApiKey is None:
+			hunterApiKey = input("Hunter.io API Key: ")
+		else:
+			print(bcolors.NONERED + '[!] YAML Error with HunterIO API Key... ' + bcolors.ENDLINE)
+
+		if usstaff and yamlcontents["USStaffCompanyName"] != '':
+			usstaffcompany = yamlcontents["USStaffCompanyName"]
+		elif usstaff and args.usstaffcompany == '':
+			usstaffcompany = input("USStaff Name: ")
+		else:
+			print(bcolors.NONERED + '[!] YAML Error with USStaff Company... ' + bcolors.ENDLINE)
+
+		if phonebookCZ and yamlcontents["PhonebookDomain"] != '':
+			phonebookTargetDomain = yamlcontents["PhonebookDomain"]
+		elif phonebookCZ and args.phonebookTargetDomain == '':
+			phonebookTargetDomain = input("Phonebook Target Domain: ")
+		else:
+			print(bcolors.NONERED + '[!] YAML Error with Phonebook CZ Domain... ' + bcolors.ENDLINE)
+
+		if phonebookCZ and yamlcontents["intelXAPIKey"] != '':
+			intelAPIKey = yamlcontents["intelXAPIKey"]
+		elif phonebookCZ and args.intelAPIKey == '':
+			intelAPIKey = input("Phonebook API Key: ")
+		else:
+			print(bcolors.NONERED + '[!] YAML Error with Phonebook CZ API Key... ' + bcolors.ENDLINE)
+
+	else:
+		print(bcolors.NONERED + '[!] YAML file does not exist, exiting....' + bcolors.ENDLINE)
+		sys.exit()
+
+else:
+	if linkedingen and args.companyid is None and args.company == '':
+		company = input("Company Name: ")
+	if linkedingen and args.linkedin_username is None:
+		linkedin_username = input("LinkedIn Username: ")
+	if linkedingen and args.linkedin_password is None:
+		linkedin_password = getpass.getpass("LinkedIn Password: ")
+	if zipull and args.zilink is None:
+		zilink = input("ZoomInfo Link: ")
+	if hunterIO and args.hunterDomain is None:
+		hunterDomain = input("Hunter.io Domain to Query: ")
+	if hunterIO and args.hunterApiKey is None:
+		hunterApiKey = input("Hunter.io API Key: ")
+	if usstaff and args.usstaffcompany is None:
+		usstaffcompany = input("USStaff Name: ")
+	if phonebookCZ and args.phonebookTargetDomain is None:
+		phonebookTargetDomain = input("Phonebook Target Domain: ")
+	if phonebookCZ and args.intelAPIKey is None:
+		intelAPIKey = input("Phonebook API Key: ")
+
 if singleproxy != 'None' and proxylist != 'None':
 	print("[-] Please only use single proxy OR proxy file, not both")
 	sys.exit()
+
 if "/c/" in zilink:
 	zilink = zilink.replace("/c/", "/pic/")
-user_agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3'
 
-# Colors for terminal output because Waffles likes pretty things
-class bcolors:
-	OKGREEN = '\033[92m'
-	BOLD = '\033[1m'
-	NONERED = '\033[91m'
-	ENDLINE = '\033[0m'
-	UNDERLINE = '\033[4m'
+user_agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3'
 
 if outputfile == '' and not printnames:
 	print(bcolors.NONERED + '[!] No output option select, choose an output file (-o) or print to screen (-pn)... ' + bcolors.ENDLINE)
@@ -115,6 +213,7 @@ zoomInfoNamesList = []
 linkedInNamesList = []
 hunterNamesList = []
 usStaffNamesList = []
+phonebookNamesList = []
 printNamesModifierList = []
 printNamesFullList = []
 mangledNamesList = []
@@ -383,7 +482,7 @@ def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 			finalName = firstName.capitalize() + " " + lastName.capitalize()
 			hunterNamesList.append(str(finalName))
 
-# Special thanks to bigb0sss for the USStaff portion below
+# Special thanks to bigb0sss for the USStaff function
 def usStaffMama(company):
 	usstaff_url = "https://bearsofficialsstore.com/company/%s/page1" % company
 	r = requests.get(usstaff_url)
@@ -391,7 +490,7 @@ def usStaffMama(company):
 	if r.status_code != 200:
 		print("[!] 404 Error! The company name needs to be verified for USStaff. Go to https://bearsofficialsstore.com/ and find the EXACT company name (e.g., t-mobile != t_mobile)")
 		pass
-	
+
 	content = (r.text)
 	contentSoup = BeautifulSoup(content, 'html.parser')
 
@@ -399,7 +498,8 @@ def usStaffMama(company):
 		page = i.get('href')
 		if "page" in page:
 			match = re.search('page([0-9]*)', page)
-
+		else:
+			match = None
 	if match == None:
 		lastPage = 1
 		lastPageNum = 2
@@ -408,9 +508,9 @@ def usStaffMama(company):
 		lastPage = int(lastPage)
 		lastPageNum = lastPage + 1
 
-	for page in range(1, lastPageNum):	
+	for page in range(1, lastPageNum):
 		usstaff_url2 = "https://bearsofficialsstore.com/company/%s/page%s" % (company, page)
-		
+
 		r = requests.get(usstaff_url2)
 		content = (r.text)
 		contentSoup = BeautifulSoup(content, 'html.parser')
@@ -458,6 +558,30 @@ def usStaffMama(company):
 				else:
 					usStaffNamesList.append(str(fname + " " + lname))
 
+def phonebookCZFunc(phonebookTargetDomain, intelAPIKey):
+	ix = intelx(intelAPIKey)
+
+	creditsLeft = ix.GET_CAPABILITIES()["paths"]["/phonebook/search"]["Credit"]
+	creditsTotal = ix.GET_CAPABILITIES()["paths"]["/phonebook/search"]["CreditMax"]
+	phonebookCredits = str(creditsLeft) + "/" + str(creditsTotal)
+	phonebookContinue = input(bcolors.NONERED + '[!] ' + phonebookCredits + ' Phonebook Searches Remaining, Continue? [Y/n] ' + bcolors.ENDLINE)
+	if phonebookContinue == "y" or phonebookContinue == "Y" or phonebookContinue == "":
+		phonebookContinue = True
+	elif phonebookContinue == "n" or phonebookContinue == "N":
+		phonebookContinue = False
+		print(bcolors.NONERED + '\n[!] Not pulling names from Phonebook\n' + bcolors.ENDLINE)
+		return
+	else:
+		print(bcolors.NONERED + '\n[!] Not a valid option, not pulling names from Phonebook\n' + bcolors.ENDLINE)
+		return
+
+	PhonebookSearchFunction = ix.phonebooksearch(phonebookTargetDomain, maxresults=100000, buckets=[], timeout=5, datefrom="", dateto="", sort=4, media=0, terminate=[], target=2)
+	for block in PhonebookSearchFunction:
+		for result in block['selectors']:
+			if result['selectortype'] == 1:
+				splitEmailAddress = result['selectorvalue'].split("@")
+				phonebookNamesList.append(str(splitEmailAddress[0]))
+
 def mangler(mangleMode, nameList):
 	for name in nameList:
 		#if '.' in name:
@@ -490,6 +614,22 @@ def mangler(mangleMode, nameList):
 			firstPart = name.split(" ")[0]
 			lastPart = name.split(" ")[1][:1]
 			mangledName = str(firstPart.strip()) + str(lastPart.strip())
+		elif mangleMode == 7:
+			firstPart = name.split(" ")[0][:1]
+			lastPart = name.split(" ")[1]
+			mangledName = str(lastPart.strip()) + str(firstPart.strip())
+		elif mangleMode == 8:
+			firstPart = name.split(" ")[0]
+			lastPart = name.split(" ")[1]
+			mangledName = str(firstPart.strip()) + "_" + str(lastPart.strip())
+		elif mangleMode == 9:
+			firstPart = name.split(" ")[0]
+			lastPart = name.split(" ")[1]
+			mangledName = str(lastPart.strip()) + "_" + str(firstPart.strip())
+		elif mangleMode == 10:
+			firstPart = name.split(" ")[0][:1]
+			lastPart = name.split(" ")[1]
+			mangledName = str(lastPart.strip()) + "." + str(firstPart.strip())
 
 		mangledNamesList.append(mangledName.strip())
 		if printnames:
@@ -539,7 +679,16 @@ def main_generator():
 			print(bcolors.NONERED + "[!] Errors scraping USStaff names" + bcolors.ENDLINE)
 			pass
 
-	if len(zoomInfoNamesList) == 0 and len(linkedInNamesList) == 0 and len(usStaffNamesList) == 0 and len(hunterNamesList) == 0:
+	if phonebookCZ:
+		try:
+			print(bcolors.OKGREEN + '[+] Pulling names from Phonebook\n' + bcolors.ENDLINE)
+			phonebookCZFunc(phonebookTargetDomain, intelAPIKey)
+			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(phonebookNamesList)) + ' Employees from Phonebook\n' + bcolors.ENDLINE)
+		except:
+			print(bcolors.NONERED + "[!] Errors pulling Phonebook names" + bcolors.ENDLINE)
+			pass
+
+	if len(zoomInfoNamesList) == 0 and len(linkedInNamesList) == 0 and len(usStaffNamesList) == 0 and len(hunterNamesList) == 0 and len(phonebookNamesList) == 0:
 		print(bcolors.NONERED + "[!] No names obtained, Exiting...\n" + bcolors.ENDLINE)
 		sys.exit()
 
@@ -550,8 +699,8 @@ def main_generator():
 		printNamesFullList.append(str(finalPotentialName))
 	mangler(mangleMode, printNamesFullList)
 
-	totalPotentialUsers = len(printNamesFullList)
-	totalPotentialUsersMangled = len(mangledNamesList)
+	totalPotentialUsers = int(len(printNamesFullList)) + int(len(phonebookNamesList))
+	totalPotentialUsersMangled = int(len(mangledNamesList)) + int(len(phonebookNamesList))
 
 	if outputfile != '':
 		if os.path.exists(outputfile):
@@ -565,21 +714,31 @@ def main_generator():
 			else:
 				print(bcolors.NONERED + '[!] Not a valid option, exiting...' + bcolors.ENDLINE)
 				sys.exit()
-    
+
 		if mangleMode == 0:
 			with open(outputfile, mode='wt', encoding='utf-8') as writeOutFile:
 				writeOutFile.write('\n'.join(printNamesFullList))
+				if phonebookCZ:
+					writeOutFile.write('\n'.join(phonebookNamesList))
 		if mangleMode > 0:
 			with open(outputfile, mode='wt', encoding='utf-8') as writeOutFile:
 				writeOutFile.write('\n'.join(mangledNamesList))
+				if phonebookCZ:
+					writeOutFile.write('\n'.join(phonebookNamesList))
 
 	if printnames:
 		if mangleMode == 0:
 			for i in list(printNamesFullList):
 				print(str(i))
+			if phonebookCZ:
+				for n in list(phonebookNamesList):
+					print(str(n))
 		if mangleMode > 0:
 			for i in list(mangledPrintNamesList):
 				print(str(i))
+			if phonebookCZ:
+				for n in list(phonebookNamesList):
+					print(str(n))
 
 	if mangleMode == 0:
 		print(bcolors.OKGREEN + '\n[+] Found a total of ' + str(totalPotentialUsers) + ' potential usernames\n' + bcolors.ENDLINE)
