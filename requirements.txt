@@ -1,6 +1,7 @@
 beautifulsoup4
-bs4
 cloudscraper
+httpimport
 pyhunter
+PyYAML
 requests
-unidecode
+Unidecode
