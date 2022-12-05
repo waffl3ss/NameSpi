@@ -105,7 +105,7 @@ if useyamlfile != '':
 	if os.path.exists(useyamlfile):
 		with open(useyamlfile, 'r') as yamlfile:
 			yamlcontents = yaml.safe_load(yamlfile)
-			print(yamlcontents)
+			#print(yamlcontents)
 
 		if linkedingen and yamlcontents["CompanyID"] == '' and yamlcontents["CompanyName"] != '':
 			company = yamlcontents["CompanyName"]
