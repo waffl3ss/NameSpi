@@ -1,14 +1,15 @@
-# NameSpi - v1.0
+# NameSpi - v1.1
 ### PLEASE report any recommendations, issues, etc to me. Best way to reach me is keybase @waffless ...
 
 ### Please make sure to read the README before using NameSpi. If you submit an 'issue' that is labeled in the README, I will call you a moron and close it.
 
-This tool is designed to create a list of employees for the company of your choice. It pulls from your choices of LinkedIn, ZoomInfo, USStaff, Hunter.io, and Phonebook.cz.
+This tool is designed to create a list of employees for the company of your choice. It pulls from your choices of LinkedIn, ZoomInfo, USStaff, Hunter.io, and Phonebook.cz. Also has the ability to pull and mangle a list of 250k statistically likely names.
 - The LinkedIn functionality pulls employees from the company LinkedIn page based on your connections. The more connections you have the better.
 - The ZoomInfo functionality pulls employees based on the URL provided. Provide the target company's ZoomInfo link and youll get back up to 125 unique names. (currently hit/miss as their anti-scraping is getting better... stay tuned i have ideas to fix this)
 - The Hunter.io functionality pulls employees names based on your subscription level. The Free version only allows 10. This will also identify the email format if you plan on mangeling names for password guessing.
 - The USStaff functionality pulls employee names from https://bearsofficialsstore.com/
 - The phonebook functionality pulls emails from Phonebook.cz using your Developer API key. This is limited to 10 requests a day on the free version.
+- The statistically likely functionality pulls 250k statiscially like names. (CAUTION: Long List)
 - The script also cleans up the names, removes duplicates, removes accents, changes capitalization for uniformity, and can mangle to the output you want (10 options built in).
 
 - ZoomInfo can be picky with how many times an IP can hit the employee names portion. Therefore, the ZoomInfo portion is ProxyAware with the `-proxy` or `-proxyfile` options. Make sure to include the type of proxy (i.e. `socks5://127.0.0.1:1080`)
@@ -41,8 +42,9 @@ options:
   -li                   Run the LinkedIn module
   -zi                   Pull ZoomInfo Employee Names
   -hio                  Pull Emails from Hunter.io
-  -uss                  Pull Names from USStaff (https://bearsofficialsstore.com/)
+  -uss                  Pull Names from USStaff (https://bearsofficialsstore.com/) Special Thanks: #bigb0sss
   -pb                   Pull Names from Phonebook.CZ
+  -sl                   Use Statistically Likely Usernames in output (CAUTION: Creates a VERY long list) Special Thanks: AchocolatechipPancake
   -pbdom PHONEBOOKTARGETDOMAIN
                         Domain to query Phonebook
   -iapi INTELAPIKEY     IntelX API Key
@@ -77,6 +79,7 @@ options:
 ./NameSpi.py -o MyOutput -li -zi -hio
 ./NameSpi.py -o MyOutput -li -zi -hio -pn
 ./NameSpi.py -o MyOutput -li -zi -hio -uss -pb
+./NameSpi.py -o MyOutput -li -zi -hio -uss -pb -sl
 ./NameSpi.py -pn -li -zi -uss
 ./NameSpi.py -pn -zi -proxy socks5://127.0.0.1:1080
 ```
