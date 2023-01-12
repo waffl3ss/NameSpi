@@ -29,9 +29,8 @@ $ ./NameSpi.py -h
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
  | |\  | (_| | | | | | |  __/___) | |_) | | 
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.0 
+                                  |_| v1.1 
              Author: #Waffl3ss 
-         Special Thanks: #bigb0sss 
 
 
 usage: NameSpi_v1.py [-h] [-li] [-zi] [-hio] [-uss] [-pb] [-pbdom PHONEBOOKTARGETDOMAIN] [-iapi INTELAPIKEY] [-o OUTPUTFILE] [-pn] [-c COMPANY] [-id COMPANYID] [-s SLEEP] [-t TIMEOUT] [-user LINKEDIN_USERNAME]
@@ -98,9 +97,8 @@ $ ./NameSpi.py -zi -li -hio -uss -pb
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
  | |\  | (_| | | | | | |  __/___) | |_) | | 
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.0
+                                  |_| v1.1
              Author: #Waffl3ss
-         Special Thanks: #bigb0sss
 
 
 Company Name: 
