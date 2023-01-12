@@ -2,13 +2,13 @@
 
 from __future__ import division
 from http.cookiejar import CookieJar
-from urllib.request import Request, build_opener, HTTPCookieProcessor, HTTPHandler, HTTPSHandler, urlopen
+from urllib.request import Request, build_opener, HTTPCookieProcessor, HTTPHandler, urlopen
 from urllib.parse import urlencode
 from argparse import RawTextHelpFormatter
 from pyhunter import PyHunter
 from bs4 import BeautifulSoup
-from itertools import cycle
-import time, json, math, ssl, argparse, re, sys, os, codecs, hashlib, hmac, base64, urllib, requests, cloudscraper, getpass, random, unidecode, httpimport, yaml
+import time, json, math, argparse, re, sys, os, urllib3, requests, cloudscraper, getpass, random, unidecode, httpimport, yaml
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 with httpimport.remote_repo('https://raw.githubusercontent.com/IntelligenceX/SDK/master/Python/'):
 	from intelxapi import intelx
@@ -19,9 +19,8 @@ banner = """
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
  | |\  | (_| | | | | | |  __/___) | |_) | | 
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.0 
-             Author: #Waffl3ss 
-         Special Thanks: #bigb0sss \n\n"""
+                                  |_| v1.1 
+             Author: #Waffl3ss \n\n"""
 print(banner)
 
 # Parse user arguments
@@ -29,8 +28,9 @@ parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
 parser.add_argument('-li', dest='linkedingen', default=False, required=False, help="Run the LinkedIn module", action='store_true')
 parser.add_argument('-zi', dest='zipull', required=False, default=False, help="Pull ZoomInfo Employee Names", action='store_true')
 parser.add_argument('-hio', dest='hunterIO', required=False, default=False, help="Pull Emails from Hunter.io", action='store_true')
-parser.add_argument('-uss', dest='usstaff', required=False, default=False, help="Pull Names from USStaff (https://bearsofficialsstore.com/)", action='store_true')
+parser.add_argument('-uss', dest='usstaff', required=False, default=False, help="Pull Names from USStaff (https://bearsofficialsstore.com/) Special Thanks: #bigb0sss", action='store_true')
 parser.add_argument('-pb', dest='phonebookCZ', required=False, default=False, help="Pull Names from Phonebook.CZ", action='store_true')
+parser.add_argument('-sl', dest='statlikely', required=False, default=False, help="Use Statistically Likely Usernames in output (CAUTION: Creates a VERY long list) Special Thanks: AchocolatechipPancake", action='store_true')
 parser.add_argument('-pbdom', dest='phonebookTargetDomain', required=False, help="Domain to query Phonebook")
 parser.add_argument('-iapi', dest='intelAPIKey', required=False, help="IntelX API Key")
 parser.add_argument('-o', dest='outputfile', required=False, default='', help="Write output to file")
@@ -77,6 +77,7 @@ phonebookCZ = args.phonebookCZ # Bool
 phonebookTargetDomain = str(args.phonebookTargetDomain) # String
 intelAPIKey = str(args.intelAPIKey) # String
 useyamlfile = str(args.useyamlfile) # Bool
+statlikely = args.statlikely # Bool
 
 # Colors for terminal output because Waffles likes pretty things
 class bcolors:
@@ -105,7 +106,7 @@ if useyamlfile != '':
 	if os.path.exists(useyamlfile):
 		with open(useyamlfile, 'r') as yamlfile:
 			yamlcontents = yaml.safe_load(yamlfile)
-			#print(yamlcontents)
+			print(yamlcontents)
 
 		if linkedingen and yamlcontents["CompanyID"] == '' and yamlcontents["CompanyName"] != '':
 			company = yamlcontents["CompanyName"]
@@ -218,6 +219,7 @@ printNamesModifierList = []
 printNamesFullList = []
 mangledNamesList = []
 mangledPrintNamesList = []
+statlikelyNamesList = []
 
 def getcookie(cookiejar):
 	c = ""
@@ -482,8 +484,7 @@ def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 			finalName = firstName.capitalize() + " " + lastName.capitalize()
 			hunterNamesList.append(str(finalName))
 
-# Special thanks to bigb0sss for the USStaff function
-def usStaffMama(company):
+def usStaffMama(company): # Special thanks to bigb0sss for the USStaff function
 	usstaff_url = "https://bearsofficialsstore.com/company/%s/page1" % company
 	r = requests.get(usstaff_url)
 
@@ -582,10 +583,17 @@ def phonebookCZFunc(phonebookTargetDomain, intelAPIKey):
 				splitEmailAddress = result['selectorvalue'].split("@")
 				phonebookNamesList.append(str(splitEmailAddress[0]))
 
+def statlikelyCreator(): # Thank you AchocolatechipPancake for the addition
+	statlikelyList = requests.get("https://github.com/insidetrust/statistically-likely-usernames/raw/master/john.smith.txt", allow_redirects=True, verify=False)
+	for nameLine in statlikelyList.iter_lines():
+		nameLine = nameLine.decode("utf-8")
+		statlikelyFirstName = nameLine.split(".")[0]
+		statlikelyLastName = nameLine.split(".")[1]
+		statlikelyFullName = str(statlikelyFirstName) + " " + str(statlikelyLastName)
+		statlikelyNamesList.append(str(statlikelyFullName))  
+		
 def mangler(mangleMode, nameList):
 	for name in nameList:
-		#if '.' in name:
-			#continue
 		if mangleMode == 0:
 			firstPart = name.split(" ")[0]
 			lastPart = name.split(" ")[1]
@@ -688,11 +696,31 @@ def main_generator():
 			print(bcolors.NONERED + "[!] Errors pulling Phonebook names" + bcolors.ENDLINE)
 			pass
 
-	if len(zoomInfoNamesList) == 0 and len(linkedInNamesList) == 0 and len(usStaffNamesList) == 0 and len(hunterNamesList) == 0 and len(phonebookNamesList) == 0:
+	if statlikely:
+		statlikelyContinue = input(bcolors.OKGREEN + '[+] Statistically Likely Option enabled, this will generate a VERY long list. Continue? [Y/n] ' + bcolors.ENDLINE)
+		if statlikelyContinue == "y" or statlikelyContinue == "Y" or statlikelyContinue == "":
+			statlikelyContinue = True
+		elif statlikelyContinue == "n" or statlikelyContinue == "N":
+			statlikelyContinue = False
+			print(bcolors.NONERED + '\n[!] Not pulling names from Statistically Likely\n' + bcolors.ENDLINE)
+			return
+		else:
+			print(bcolors.NONERED + '\n[!] Not a valid option, not pulling names from Statistically Likely\n' + bcolors.ENDLINE)
+			return
+		if statlikelyContinue:
+			try:
+				print(bcolors.OKGREEN + '[+] Pulling names from Statistically Likely\n' + bcolors.ENDLINE)
+				statlikelyCreator()
+				print(bcolors.OKGREEN + '[+] Pulled 248,231 Statistically Likely Names\n' + bcolors.ENDLINE)
+			except:
+				print(bcolors.NONERED + "[!] Errors pulling Statistically Likely Names" + bcolors.ENDLINE)
+				pass
+
+	if len(zoomInfoNamesList) == 0 and len(linkedInNamesList) == 0 and len(usStaffNamesList) == 0 and len(hunterNamesList) == 0 and len(phonebookNamesList) == 0 and len(statlikelyNamesList) == 0:
 		print(bcolors.NONERED + "[!] No names obtained, Exiting...\n" + bcolors.ENDLINE)
 		sys.exit()
 
-	printNamesModifierList = linkedInNamesList + zoomInfoNamesList + hunterNamesList + usStaffNamesList
+	printNamesModifierList = linkedInNamesList + zoomInfoNamesList + hunterNamesList + usStaffNamesList + statlikelyNamesList
 	printNamesModifierList = list(set(printNamesModifierList))
 	for potentialName in printNamesModifierList:
 		finalPotentialName = unidecode.unidecode(potentialName.capitalize())
