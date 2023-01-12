@@ -7,9 +7,9 @@ This tool is designed to create a list of employees for the company of your choi
 - The LinkedIn functionality pulls employees from the company LinkedIn page based on your connections. The more connections you have the better.
 - The ZoomInfo functionality pulls employees based on the URL provided. Provide the target company's ZoomInfo link and youll get back up to 125 unique names. (currently hit/miss as their anti-scraping is getting better... stay tuned i have ideas to fix this)
 - The Hunter.io functionality pulls employees names based on your subscription level. The Free version only allows 10. This will also identify the email format if you plan on mangeling names for password guessing.
-- The USStaff functionality pulls employee names from https://bearsofficialsstore.com/
+- The USStaff functionality pulls employee names from https://bearsofficialsstore.com/ (Thanks to #bigb0sss for this one)
 - The phonebook functionality pulls emails from Phonebook.cz using your Developer API key. This is limited to 10 requests a day on the free version.
-- The statistically likely functionality pulls 250k statiscially like names. (CAUTION: Long List)
+- The statistically likely functionality pulls 250k statiscially like names. (CAUTION: Long List) (Thanks to #AchocolatechipPancake for this one)
 - The script also cleans up the names, removes duplicates, removes accents, changes capitalization for uniformity, and can mangle to the output you want (10 options built in).
 
 - ZoomInfo can be picky with how many times an IP can hit the employee names portion. Therefore, the ZoomInfo portion is ProxyAware with the `-proxy` or `-proxyfile` options. Make sure to include the type of proxy (i.e. `socks5://127.0.0.1:1080`)
@@ -43,7 +43,7 @@ options:
   -hio                  Pull Emails from Hunter.io
   -uss                  Pull Names from USStaff (https://bearsofficialsstore.com/) Special Thanks: #bigb0sss
   -pb                   Pull Names from Phonebook.CZ
-  -sl                   Use Statistically Likely Usernames in output (CAUTION: Creates a VERY long list) Special Thanks: AchocolatechipPancake
+  -sl                   Use Statistically Likely Usernames in output (CAUTION: Creates a VERY long list) Special Thanks: #AchocolatechipPancake
   -pbdom PHONEBOOKTARGETDOMAIN
                         Domain to query Phonebook
   -iapi INTELAPIKEY     IntelX API Key
