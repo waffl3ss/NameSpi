@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 from argparse import RawTextHelpFormatter
 from pyhunter import PyHunter
 from bs4 import BeautifulSoup
-import time, json, math, argparse, re, sys, os, urllib3, requests, cloudscraper, getpass, random, unidecode, httpimport, yaml
+import time, json, math, argparse, re, sys, os, urllib3, requests, cloudscraper, getpass, random, unidecode, httpimport, yaml, yaspin
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 with httpimport.remote_repo('https://raw.githubusercontent.com/IntelligenceX/SDK/master/Python/'):
@@ -425,26 +425,27 @@ def linkedInGen():
 
 	count = content["data"]["metadata"]["totalResultCount"]
 	print(bcolors.OKGREEN + '[+] Found {} possible employees'.format(count) + bcolors.ENDLINE)
-	for i in range(1, int(math.ceil(count/50))+1):
-		if i == 1:
-			data = recon(None, cj, 49, 0)
-		else:
-			data = recon(None, cj, 49, i*50)
-		content = json.loads(data)
+	with yaspin.yaspin(text=" - Running LinkedIn Enumeration"):
+		for i in range(1, int(math.ceil(count/50))+1):
+			if i == 1:
+				data = recon(None, cj, 49, 0)
+			else:
+				data = recon(None, cj, 49, i*50)
+			content = json.loads(data)
 
-		for user in content["included"]: # Part where the names are created and/or mangled
-			if "firstName" in user:
-				first_name = re.sub(r'\W+', ' ', user.get("firstName")).split(" ")[0]
-				last_name = re.sub(r'\W+', ' ', user.get("lastName")).split(" ")[0]
-				full_name = (first_name.capitalize() + " " + last_name.capitalize())
+			for user in content["included"]: # Part where the names are created and/or mangled
+				if "firstName" in user:
+					first_name = re.sub(r'\W+', ' ', user.get("firstName")).split(" ")[0]
+					last_name = re.sub(r'\W+', ' ', user.get("lastName")).split(" ")[0]
+					full_name = (first_name.capitalize() + " " + last_name.capitalize())
 
-				if full_name.startswith("."):
-					pass
-				elif len(first_name) <= 1 or len(last_name) <= 1:
-					pass
-				else:
-					linkedInNamesList.append(str(full_name))
-		time.sleep(sleep)
+					if full_name.startswith("."):
+						pass
+					elif len(first_name) <= 1 or len(last_name) <= 1:
+						pass
+					else:
+						linkedInNamesList.append(str(full_name))
+			time.sleep(sleep)
   
 def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 	hunter = PyHunter(hunterApiKey)
@@ -470,19 +471,20 @@ def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 		domainHunterPattern = 'No pattern identified in Hunter.IO'
 	print(bcolors.OKGREEN + '\n[+] Email Pattern Identified: ' + str(domainHunterPattern) + '\n' + bcolors.ENDLINE)
 
-	hunterDomainSearchJSONCreate = json.dumps(domainSearchHunterJson)
-	hunterDomainSearchJSONObject = json.loads(hunterDomainSearchJSONCreate)
-	listJSONObjectEmails = hunterDomainSearchJSONObject['emails']
-	print(bcolors.OKGREEN + '[+] Hunter.IO ' + hunterPlanname + ' plan identified\n' + bcolors.ENDLINE)
+	with yaspin.yaspin(text=" - Running Hunter.IO Enumeration"):
+		hunterDomainSearchJSONCreate = json.dumps(domainSearchHunterJson)
+		hunterDomainSearchJSONObject = json.loads(hunterDomainSearchJSONCreate)
+		listJSONObjectEmails = hunterDomainSearchJSONObject['emails']
+		print(bcolors.OKGREEN + '\n[+] Hunter.IO ' + hunterPlanname + ' plan identified\n' + bcolors.ENDLINE)
 
-	for emailKey in listJSONObjectEmails:
-		firstName = emailKey['first_name']
-		lastName = emailKey['last_name']
-		if firstName == None or lastName == None:
-			continue
-		else:
-			finalName = firstName.capitalize() + " " + lastName.capitalize()
-			hunterNamesList.append(str(finalName))
+		for emailKey in listJSONObjectEmails:
+			firstName = emailKey['first_name']
+			lastName = emailKey['last_name']
+			if firstName == None or lastName == None:
+				continue
+			else:
+				finalName = firstName.capitalize() + " " + lastName.capitalize()
+				hunterNamesList.append(str(finalName))
 
 def usStaffMama(company): # Special thanks to bigb0sss for the USStaff function
 	usstaff_url = "https://bearsofficialsstore.com/company/%s/page1" % company
@@ -576,12 +578,13 @@ def phonebookCZFunc(phonebookTargetDomain, intelAPIKey):
 		print(bcolors.NONERED + '\n[!] Not a valid option, not pulling names from Phonebook\n' + bcolors.ENDLINE)
 		return
 
-	PhonebookSearchFunction = ix.phonebooksearch(phonebookTargetDomain, maxresults=100000, buckets=[], timeout=5, datefrom="", dateto="", sort=4, media=0, terminate=[], target=2)
-	for block in PhonebookSearchFunction:
-		for result in block['selectors']:
-			if result['selectortype'] == 1:
-				splitEmailAddress = result['selectorvalue'].split("@")
-				phonebookNamesList.append(str(splitEmailAddress[0]))
+	with yaspin.yaspin(text=" - Running PhoneBook.CZ Enumeration"):
+		PhonebookSearchFunction = ix.phonebooksearch(phonebookTargetDomain, maxresults=100000, buckets=[], timeout=5, datefrom="", dateto="", sort=4, media=0, terminate=[], target=2)
+		for block in PhonebookSearchFunction:
+			for result in block['selectors']:
+				if result['selectortype'] == 1:
+					splitEmailAddress = result['selectorvalue'].split("@")
+					phonebookNamesList.append(str(splitEmailAddress[0]))
 
 def statlikelyCreator(): # Thank you AchocolatechipPancake for the addition
 	statlikelyList = requests.get("https://github.com/insidetrust/statistically-likely-usernames/raw/master/john.smith.txt", allow_redirects=True, verify=False)
@@ -658,16 +661,17 @@ def main_generator():
 
 	if zipull:
 		print(bcolors.OKGREEN + '[+] Pulling ZoomInfo Company Employee Names\n' + bcolors.ENDLINE)
-		if proxylist != 'None':
-			print(bcolors.OKGREEN + '[+] Using Proxy File ' + str(proxylist) + '\n' + bcolors.ENDLINE)
-		if singleproxy != 'None':
-			print(bcolors.OKGREEN + '[+] Using ' + str(singleproxy) + ' as the Proxy\n' + bcolors.ENDLINE)
-		try:
-			extractZINames(zilink)
-			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(zoomInfoNamesList)) + ' ZoomInfo Employees\n' + bcolors.ENDLINE)
-		except:
-			print(bcolors.NONERED + "[!] Errors Pulling ZoomInfo Names" + bcolors.ENDLINE)
-			pass
+		with yaspin.yaspin(text=" - Running ZoomInfo Enumeration"):
+			if proxylist != 'None':
+				print(bcolors.OKGREEN + '[+] Using Proxy File ' + str(proxylist) + '\n' + bcolors.ENDLINE)
+			if singleproxy != 'None':
+				print(bcolors.OKGREEN + '[+] Using ' + str(singleproxy) + ' as the Proxy\n' + bcolors.ENDLINE)
+			try:
+				extractZINames(zilink)
+				print(bcolors.OKGREEN + '[+] Pulled ' + str(len(zoomInfoNamesList)) + ' ZoomInfo Employees\n' + bcolors.ENDLINE)
+			except:
+				print(bcolors.NONERED + "[!] Errors Pulling ZoomInfo Names" + bcolors.ENDLINE)
+				pass
 
 	if hunterIO:
 		try:
@@ -681,7 +685,8 @@ def main_generator():
 	if usstaff:
 		try:
 			print(bcolors.OKGREEN + '[+] Pulling names from USStaff\n' + bcolors.ENDLINE)
-			usStaffMama(usstaffcompany)
+			with yaspin.yaspin(text=" - Running US Staff Enumeration"):
+				usStaffMama(usstaffcompany)
 			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(usStaffNamesList)) + ' USStaff Employees\n' + bcolors.ENDLINE)
 		except:
 			print(bcolors.NONERED + "[!] Errors scraping USStaff names" + bcolors.ENDLINE)
@@ -710,7 +715,8 @@ def main_generator():
 		if statlikelyContinue:
 			try:
 				print(bcolors.OKGREEN + '[+] Pulling names from Statistically Likely\n' + bcolors.ENDLINE)
-				statlikelyCreator()
+				with yaspin.yaspin(text=" - Running StatLikely Enumeration"):
+					statlikelyCreator()
 				print(bcolors.OKGREEN + '[+] Pulled 248,231 Statistically Likely Names\n' + bcolors.ENDLINE)
 			except:
 				print(bcolors.NONERED + "[!] Errors pulling Statistically Likely Names" + bcolors.ENDLINE)
