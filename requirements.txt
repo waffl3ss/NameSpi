@@ -5,3 +5,4 @@ pyhunter
 PyYAML
 requests
 Unidecode
+yaspin
