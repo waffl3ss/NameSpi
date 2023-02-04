@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 from argparse import RawTextHelpFormatter
 from pyhunter import PyHunter
 from bs4 import BeautifulSoup
-import time, json, math, argparse, re, sys, os, urllib3, requests, cloudscraper, getpass, random, unidecode, httpimport, yaml, yaspin
+import time, json, math, argparse, re, sys, os, urllib3, requests, getpass, unidecode, httpimport, yaml, yaspin
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 with httpimport.remote_repo('https://raw.githubusercontent.com/IntelligenceX/SDK/master/Python/'):
@@ -19,14 +19,13 @@ banner = """
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
  | |\  | (_| | | | | | |  __/___) | |_) | | 
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.1 
+                                  |_| v1.2 
              Author: #Waffl3ss \n\n"""
 print(banner)
 
 # Parse user arguments
 parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
 parser.add_argument('-li', dest='linkedingen', default=False, required=False, help="Run the LinkedIn module", action='store_true')
-parser.add_argument('-zi', dest='zipull', required=False, default=False, help="Pull ZoomInfo Employee Names", action='store_true')
 parser.add_argument('-hio', dest='hunterIO', required=False, default=False, help="Pull Emails from Hunter.io", action='store_true')
 parser.add_argument('-uss', dest='usstaff', required=False, default=False, help="Pull Names from USStaff (https://bearsofficialsstore.com/) Special Thanks: #bigb0sss", action='store_true')
 parser.add_argument('-pb', dest='phonebookCZ', required=False, default=False, help="Pull Names from Phonebook.CZ", action='store_true')
@@ -41,12 +40,9 @@ parser.add_argument('-s', dest='sleep', default=5, required=False, help="Time to
 parser.add_argument('-t', dest='timeout', required=False, default=5, help="HTTP Request timeout")
 parser.add_argument('-user', dest='linkedin_username', required=False, help="LinkedIn.com Authenticated Username")
 parser.add_argument('-pass', dest='linkedin_password', required=False, help="LinkedIn.com Authenticated Password")
-parser.add_argument('-zilink', dest='zilink', required=False, help="ZoomInfo Company Employee Link\n  (eg: https://www.zoominfo.com/pic/google-inc/16400573")
 parser.add_argument('-hapi', dest='hunterApiKey', required=False, help="Hunter.io API Key")
 parser.add_argument('-hdom', dest='hunterDomain', required=False, help="Domain to query in Hunter.io")
 parser.add_argument('-uc', dest='usstaffcompany', default='', required=False, help="Exact company name on USStaff")
-parser.add_argument('-proxy', dest='singleproxy', default='None', required=False, help="Use with [TYPE]://[IP]:[PORT]")
-parser.add_argument('-proxyfile' , dest='proxylist', default='None', required=False, help="File with newline seperate proxies. Each proxy must have the type\n  i.e. socks5://127.0.0.1:1080")
 parser.add_argument('-m', dest='mangleMode', required=False, default=0, help="Mangle Mode (use '-mo' to list mangle options). Only works with an output file (-o)")
 parser.add_argument('-mo', dest='mangleOptions', required=False, default=False, help="List Mangle Mode Options", action="store_true")
 parser.add_argument('-yaml', dest='useyamlfile', required=False, default='', help="Use YAML input file with options")
@@ -58,21 +54,17 @@ companyid = args.companyid # Int
 sleep = int(args.sleep) # Int
 timeout = int(args.timeout) # Int
 outputfile = str(args.outputfile) # String
-zipull = args.zipull # Bool
 linkedingen = args.linkedingen # Bool
 printnames = args.printnames # Bool
 hunterIO = args.hunterIO # Bool
 hunterApiKey = args.hunterApiKey # String
 hunterDomain = args.hunterDomain # String
-zilink = str(args.zilink) # String
 linkedin_username = str(args.linkedin_username) # String
 linkedin_password = str(args.linkedin_password) # String
 mangleMode = int(args.mangleMode) # Int
 mangleOptions = args.mangleOptions # Bool
 usstaff = args.usstaff # Bool
 usstaffcompany = str(args.usstaffcompany) # String
-singleproxy = str(args.singleproxy) # String
-proxylist = str(args.proxylist) # String
 phonebookCZ = args.phonebookCZ # Bool
 phonebookTargetDomain = str(args.phonebookTargetDomain) # String
 intelAPIKey = str(args.intelAPIKey) # String
@@ -131,13 +123,6 @@ if useyamlfile != '':
 		else:
 			print(bcolors.NONERED + '[!] YAML Error with LinkedIn Password... ' + bcolors.ENDLINE)
 
-		if zipull and yamlcontents["ZoomInfoLink"] != '':
-			zilink = yamlcontents["ZoomInfoLink"]
-		elif zipull and args.zilink is None:
-			zilink = input("ZoomInfo Link: ")
-		else:
-			print(bcolors.NONERED + '[!] YAML Error with Zoominfo Link... ' + bcolors.ENDLINE)
-
 		if hunterIO and yamlcontents["HunterIODomain"] != '':
 			hunterDomain = yamlcontents["HunterIODomain"]
 		elif hunterIO and args.hunterDomain is None:
@@ -184,8 +169,6 @@ else:
 		linkedin_username = input("LinkedIn Username: ")
 	if linkedingen and args.linkedin_password is None:
 		linkedin_password = getpass.getpass("LinkedIn Password: ")
-	if zipull and args.zilink is None:
-		zilink = input("ZoomInfo Link: ")
 	if hunterIO and args.hunterDomain is None:
 		hunterDomain = input("Hunter.io Domain to Query: ")
 	if hunterIO and args.hunterApiKey is None:
@@ -197,20 +180,12 @@ else:
 	if phonebookCZ and args.intelAPIKey is None:
 		intelAPIKey = input("Phonebook API Key: ")
 
-if singleproxy != 'None' and proxylist != 'None':
-	print("[-] Please only use single proxy OR proxy file, not both")
-	sys.exit()
-
-if "/c/" in zilink:
-	zilink = zilink.replace("/c/", "/pic/")
-
 user_agent = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3'
 
 if outputfile == '' and not printnames:
 	print(bcolors.NONERED + '[!] No output option select, choose an output file (-o) or print to screen (-pn)... ' + bcolors.ENDLINE)
 	sys.exit()
 
-zoomInfoNamesList = []
 linkedInNamesList = []
 hunterNamesList = []
 usStaffNamesList = []
@@ -312,103 +287,6 @@ def recon(title, cookiejar, count, start):
 	req = Request("https://www.linkedin.com/voyager/api/search/blended?" + query, None, headers)
 	f = opener.open(req, timeout=timeout)
 	return f.read()
-
-def getZISession(companyLink, pageNum):
-	zoomInfoSessionFirefox = cloudscraper.CloudScraper(browser={'browser': 'firefox', 'mobile': False, 'platform': 'windows'})
-	getURL = str(str(companyLink) + '?pageNum=' + str(pageNum))
-	# This proxy stuff below could use a clean up
-	if singleproxy != 'None' and proxylist != 'None':
-		print(bcolors.NONERED + '\n[!] Please select only one proxy option...' + bcolors.ENDLINE)
-		sys.exit()
-	if singleproxy != 'None':
-		proxies = {
-			"http": singleproxy,
-			"https": singleproxy,
-		}
-	elif proxylist != 'None':
-		proxylistfile = open(proxylist, 'r')
-		possproxy = proxylistfile.readlines()
-	else:
-		proxies = {
-			"http": None,
-			"https": None,
-		}
-	try:
-		if proxylist != 'None':
-			tryprox1 = random.choice(possproxy)
-			proxies = {
-				"http": tryprox1,
-				"https": tryprox1,
-			}
-			zoomInfoGetPage = zoomInfoSessionFirefox.get(getURL, allow_redirects=True, proxies=proxies)
-		else:
-			zoomInfoGetPage = zoomInfoSessionFirefox.get(getURL, allow_redirects=True, proxies=proxies)
-	except Exception as e:
-	#except cloudscraper.exceptions.CloudflareChallengeError as e:
-		time.sleep(3)
-		try:
-			if proxylist != 'None':
-				tryprox2 = random.choice(possproxy)
-				proxies = {
-				"http": tryprox2,
-				"https": tryprox2,
-				}
-				zoomInfoGetPage = zoomInfoSessionFirefox.get(getURL, allow_redirects=True, proxies=proxies)
-			else:
-				zoomInfoGetPage = zoomInfoSessionFirefox.get(getURL, allow_redirects=True, proxies=proxies)
-		except Exception as e:
-			time.sleep(5)
-			try:
-				if proxylist != 'None':
-					tryprox3 = random.choice(possproxy)
-					proxies = {
-					"http": tryprox3,
-					"https": tryprox3,
-					}
-					zoomInfoGetPage = zoomInfoSessionFirefox.get(getURL, allow_redirects=True, proxies=proxies)
-				else:
-					zoomInfoGetPage = zoomInfoSessionFirefox.get(getURL, allow_redirects=True, proxies=proxies)
-			except Exception as e:
-				print(bcolors.NONERED + '[!] Error pulling ZoomInfo page ' + str(pageNum) + '\n' + bcolors.ENDLINE)
-				pass
-	if zoomInfoGetPage != '':
-		return zoomInfoGetPage
-
-def extractZINames(companyLink):
-	for pageNum in range(1, 6):
-		try:
-			zoomInfoGetPage = getZISession(companyLink, pageNum)
-			zoomInfoResponseSplit = zoomInfoGetPage.text.split('<script id="app-root-state" type="application/json">')
-			zoomInfoResponseSplit2 = zoomInfoResponseSplit[1].split('</script>')[0]
-			zoomInfoResponseSplit2 = zoomInfoResponseSplit2.replace('&q;','"').replace('&a;','&').replace('&s;','\'').replace('&l;','<').replace('&g;','>')
-			zoomInfoJson = json.loads(zoomInfoResponseSplit2)
-		except Exception as e:
-			time.sleep(2)
-			try:
-				zoomInfoGetPage = getZISession(companyLink, pageNum)
-				zoomInfoResponseSplit = zoomInfoGetPage.text.split('<script id="app-root-state" type="application/json">')
-				zoomInfoResponseSplit2 = zoomInfoResponseSplit[1].split('</script>')[0]
-				zoomInfoResponseSplit2 = zoomInfoResponseSplit2.replace('&q;','"').replace('&a;','&').replace('&s;','\'').replace('&l;','<').replace('&g;','>')
-				zoomInfoJson = json.loads(zoomInfoResponseSplit2)
-			except Exception as e:
-				time.sleep(2)
-				try:
-					zoomInfoGetPage = getZISession(companyLink, pageNum)
-					zoomInfoResponseSplit = zoomInfoGetPage.text.split('<script id="app-root-state" type="application/json">')
-					zoomInfoResponseSplit2 = zoomInfoResponseSplit[1].split('</script>')[0]
-					zoomInfoResponseSplit2 = zoomInfoResponseSplit2.replace('&q;','"').replace('&a;','&').replace('&s;','\'').replace('&l;','<').replace('&g;','>')
-					zoomInfoJson = json.loads(zoomInfoResponseSplit2)
-				except Exception as e:
-					print(bcolors.NONERED + '[!] Error scraping ZoomInfo page ' + str(pageNum) + '\n' + bcolors.ENDLINE)
-					pass
-
-		for n in range(25):
-			try:
-				personName = zoomInfoJson["pic-"]["picParsedData"]["table"]["data"][n][1]["fullName"]
-				zoomInfoNamesList.append(str(personName))
-			except Exception as e:
-				pass
-		time.sleep(3)
 
 def linkedInGen():
 	if (companyid == '' or companyid is None):
@@ -658,21 +536,6 @@ def main_generator():
 		except:
 			print(bcolors.NONERED + "[!] Errors Pulling LinkedIn Names" + bcolors.ENDLINE)
 			pass
-
-	if zipull:
-		print(bcolors.OKGREEN + '[+] Pulling ZoomInfo Company Employee Names\n' + bcolors.ENDLINE)
-		with yaspin.yaspin(text=" - Running ZoomInfo Enumeration"):
-			if proxylist != 'None':
-				print(bcolors.OKGREEN + '[+] Using Proxy File ' + str(proxylist) + '\n' + bcolors.ENDLINE)
-			if singleproxy != 'None':
-				print(bcolors.OKGREEN + '[+] Using ' + str(singleproxy) + ' as the Proxy\n' + bcolors.ENDLINE)
-			try:
-				extractZINames(zilink)
-				print(bcolors.OKGREEN + '[+] Pulled ' + str(len(zoomInfoNamesList)) + ' ZoomInfo Employees\n' + bcolors.ENDLINE)
-			except:
-				print(bcolors.NONERED + "[!] Errors Pulling ZoomInfo Names" + bcolors.ENDLINE)
-				pass
-
 	if hunterIO:
 		try:
 			print(bcolors.OKGREEN + '[+] Pulling emails from Hunter.io\n' + bcolors.ENDLINE)
@@ -722,11 +585,11 @@ def main_generator():
 				print(bcolors.NONERED + "[!] Errors pulling Statistically Likely Names" + bcolors.ENDLINE)
 				pass
 
-	if len(zoomInfoNamesList) == 0 and len(linkedInNamesList) == 0 and len(usStaffNamesList) == 0 and len(hunterNamesList) == 0 and len(phonebookNamesList) == 0 and len(statlikelyNamesList) == 0:
+	if len(linkedInNamesList) == 0 and len(usStaffNamesList) == 0 and len(hunterNamesList) == 0 and len(phonebookNamesList) == 0 and len(statlikelyNamesList) == 0:
 		print(bcolors.NONERED + "[!] No names obtained, Exiting...\n" + bcolors.ENDLINE)
 		sys.exit()
 
-	printNamesModifierList = linkedInNamesList + zoomInfoNamesList + hunterNamesList + usStaffNamesList + statlikelyNamesList
+	printNamesModifierList = linkedInNamesList + hunterNamesList + usStaffNamesList + statlikelyNamesList
 	printNamesModifierList = list(set(printNamesModifierList))
 	for potentialName in printNamesModifierList:
 		finalPotentialName = unidecode.unidecode(potentialName.capitalize())
