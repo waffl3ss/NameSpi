@@ -1,5 +1,4 @@
 # NameSpi - v1.5
-### PLEASE report any recommendations, issues, etc to me. Best way to reach me is keybase @waffless ...
 
 ### Please make sure to read the README before using NameSpi. 
 
