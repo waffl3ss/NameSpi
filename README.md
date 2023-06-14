@@ -1,4 +1,4 @@
-# NameSpi - v1.2
+# NameSpi - v1.5
 ### PLEASE report any recommendations, issues, etc to me. Best way to reach me is keybase @waffless ...
 
 ### Please make sure to read the README before using NameSpi. 
@@ -11,27 +11,34 @@ This tool is designed to create a list of employees for the company of your choi
 - The statistically likely functionality pulls 250k statiscially like names. (CAUTION: Long List) (Thanks to #AchocolatechipPancake for this one)
 - The script also cleans up the names, removes duplicates, removes accents, changes capitalization for uniformity, and can mangle to the output you want (10 options built in).
 
-- **NEW!** NameSpi can take a YAML file as input! I recommend against putting your linkedin password in a YAML file, therefore if you leave that blank, the script will ask for it after its ran.
+**NEW!** NameSpi can take a YAML file as input! I recommend against putting your LinkedIn password in a YAML file, therefore if you leave that blank, the script will ask for it after its ran.  
 
-**HINT:** You do not need to supply EVERY option in the command itself. If you supply any of the collection methods after that (-li, -hio -uss -pb) and nothing else, the script will ask for the information it requires to complete the function. This is also mentioned below in the **Scraping Options** header.
+**NEW!** NameSpi now has a debug mode to help with troubleshooting errors.  
+
+------------------------------------------------------------------------------------
+
+### Notes:
+- LinkedIn module needs to be ran from an IP address that has previously logged into the account you are using, otherwise LinkedIn will send a security code, and this script does not support that.  
+- LinkedIn module can have rate limiting, and a security check (CAPTCHA) can be implemented. If that happens, running the module again can get the desired results.  
+- LinkedIn module can pull the CompanyID based on the CompanyName provided. It will supply a list of potential ID's to select from.
+- You do not need to supply EVERY option in the command itself. If you supply any of the collection methods (-li, -hio -uss -pb) and nothing else, the script will ask for the information it requires to complete the function. This is also mentioned below in the **Scraping Options** header.
 
 ------------------------------------------------------------------------------------
 # Usage
 
 ```
-$ ./NameSpi.py -h
+$ python3 NameSpi.py -h
 
-  _   _                      ____        _ 
- | \ | | __ _ _ __ ___   ___/ ___| _ __ (_) 
- |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
- | |\  | (_| | | | | | |  __/___) | |_) | | 
- |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.2 
-             Author: #Waffl3ss 
+  _   _                      ____        _
+ | \ | | __ _ _ __ ___   ___/ ___| _ __ (_)
+ |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| |
+ | |\  | (_| | | | | | |  __/___) | |_) | |
+ |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_|
+                                  |_| v1.5
+             Author: #Waffl3ss
 
 
-usage: NameSpi_v1.py [-h] [-li] [-hio] [-uss] [-pb] [-pbdom PHONEBOOKTARGETDOMAIN] [-iapi INTELAPIKEY] [-o OUTPUTFILE] [-pn] [-c COMPANY] [-id COMPANYID] [-s SLEEP] [-t TIMEOUT] [-user LINKEDIN_USERNAME]
-                     [-pass LINKEDIN_PASSWORD] [-hapi HUNTERAPIKEY] [-hdom HUNTERDOMAIN] [-uc USSTAFFCOMPANY] [-m MANGLEMODE] [-mo] [-yaml USEYAMLFILE]
+usage: NameSpi.py [-h] [-li] [-hio] [-uss] [-pb] [-sl] [-pbdom PHONEBOOKTARGETDOMAIN] [-iapi INTELAPIKEY] [-o OUTPUTFILE] [-pn] [-c COMPANY] [-id COMPANYID] [-s SLEEP] [-t TIMEOUT] [-user LINKEDIN_USERNAME] [-pass LINKEDIN_PASSWORD] [-hapi HUNTERAPIKEY] [-hdom HUNTERDOMAIN] [-uc USSTAFFCOMPANY] [-m MANGLEMODE] [-mo] [-yaml USEYAMLFILE] [-debug]
 
 options:
   -h, --help            show this help message and exit
@@ -39,7 +46,7 @@ options:
   -hio                  Pull Emails from Hunter.io
   -uss                  Pull Names from USStaff (https://bearsofficialsstore.com/) Special Thanks: #bigb0sss
   -pb                   Pull Names from Phonebook.CZ
-  -sl                   Use Statistically Likely Usernames in output (CAUTION: Creates a VERY long list) Special Thanks: #AchocolatechipPancake
+  -sl                   Use Statistically Likely Usernames in output (CAUTION: Creates a VERY long list) Special Thanks: AchocolatechipPancake
   -pbdom PHONEBOOKTARGETDOMAIN
                         Domain to query Phonebook
   -iapi INTELAPIKEY     IntelX API Key
@@ -59,13 +66,14 @@ options:
   -m MANGLEMODE         Mangle Mode (use '-mo' to list mangle options). Only works with an output file (-o)
   -mo                   List Mangle Mode Options
   -yaml USEYAMLFILE     Use YAML input file with options
+  -debug                Turn on debug mode for error output
 
 ```
 ### Examples
 
 ```
 ./NameSpi.py -o MyOutput -li
-./NameSpi.py -o MyOutput -li -hio
+./NameSpi.py -o MyOutput -li -hio -yaml Sample.yaml
 ./NameSpi.py -o MyOutput -li -hio -pn
 ./NameSpi.py -o MyOutput -li -hio -uss -pb
 ./NameSpi.py -o MyOutput -li -hio -uss -pb -sl
@@ -75,7 +83,7 @@ options:
 ------------------------------------------------------------------------------------
 # Scraping Options
 
-Options like the LinkedIn credentials, Hunter.io API Key, Hunter.io Domain Name, USStaff name, Phonebook Target Domain, Phonebook API Key, and Company name do not need to be in the command itself, the script will ask for those if you have selected the options to run those modules. These can also be thrown into the YAML file. I dont recommend putting your LinkedIn password in the file, and therefore if you leave it blank in the YAML file, the script will ask for it during execution.
+Options like the LinkedIn credentials, Hunter.io API Key, Hunter.io Domain Name, USStaff name, Phonebook Target Domain, Phonebook API Key, and Company name do not need to be in the command itself. The script will ask for those if you have selected the options to run those modules. These can also be thrown into the YAML file. I dont recommend putting your LinkedIn password in the file, and therefore if you leave it blank in the YAML file, the script will ask for it during execution.
 
 Example:
 ```
@@ -86,17 +94,17 @@ $ ./NameSpi.py -li -hio -uss -pb
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
  | |\  | (_| | | | | | |  __/___) | |_) | | 
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.2
+                                  |_| v1.5
              Author: #Waffl3ss
 
 
-Company Name: 
-LinkedIn Username: 
-LinkedIn Password: 
-Hunter.io Domain to Query: 
-Hunter.io API Key: 
-Phonebook Target Domain: 
-Phonebook API Key: 
+Company Name: <input here>
+LinkedIn Username: <input here>
+LinkedIn Password: <input here>
+Hunter.io Domain to Query: <input here>
+Hunter.io API Key: <input here>
+Phonebook Target Domain: <input here>
+Phonebook API Key: <input here>
 ```
 
 ------------------------------------------------------------------------------------
