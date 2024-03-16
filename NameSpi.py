@@ -16,7 +16,7 @@ banner = """
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
  | |\  | (_| | | | | | |  __/___) | |_) | | 
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.5 
+                                  |_| v1.6 
              Author: #Waffl3ss \n\n"""
 print(banner)
 
@@ -44,6 +44,8 @@ parser.add_argument('-m', dest='mangleMode', required=False, default=0, help="Ma
 parser.add_argument('-mo', dest='mangleOptions', required=False, default=False, help="List Mangle Mode Options", action="store_true")
 parser.add_argument('-yaml', dest='useyamlfile', required=False, default='', help="Use YAML input file with options")
 parser.add_argument('-debug', dest='debugMode', required=False, default=False, help="Turn on debug mode for error output", action="store_true")
+parser.add_argument('-lir', dest='linkedInRetryAmount', required=False, default=10, help="Amount of times to attempt the LinkedIn Security bypass")
+
 args = parser.parse_args()
 
 # Assign user arguments to variables we can use (old habit of mine)
@@ -69,12 +71,15 @@ intelAPIKey = str(args.intelAPIKey) # String
 useyamlfile = str(args.useyamlfile) # Bool
 statlikely = args.statlikely # Bool
 debugMode = args.debugMode # Bool
+linkedInRetryAmount = int(args.linkedInRetryAmount) # Int
+retrySecCheck = 1
 
 # Colors for terminal output because Waffles likes pretty things
 class bcolors:
         OKGREEN = '\033[92m'
         BOLD = '\033[1m'
         NONERED = '\033[91m'
+        WARNYELL = '\033[93m'
         ENDLINE = '\033[0m'
         UNDERLINE = '\033[4m'
 
@@ -100,10 +105,10 @@ if useyamlfile != '':
 				yamlcontents = yaml.safe_load(yamlfile)
 			except Exception as yamlexception:
 				if debugMode:
-					print(bcolors.NONERED + "[DEBUG] YAML module exception: " + yamlexception + bcolors.ENDLINE)
+					print(bcolors.WARNYELL + "[DEBUG] YAML module exception: " + yamlexception + bcolors.ENDLINE)
 					sys.exit()
 				else: 
-					print(bcolors.NONERED + "[!] YAML File Error... Exiting... "+ bcolors.ENDLINE)
+					print(bcolors.WARNYELL + "[!] YAML File Error... Exiting... "+ bcolors.ENDLINE)
 					sys.exit()
 
 		if linkedingen:
@@ -114,7 +119,7 @@ if useyamlfile != '':
 			elif linkedingen and yamlcontents["CompanyID"] != '':
 					companyid = yamlcontents["CompanyID"]
 			else:
-					print(bcolors.NONERED + '[!] YAML Error getting Company Name... ' + bcolors.ENDLINE)
+					print(bcolors.WARNYELL + '[!] YAML Error getting Company Name... ' + bcolors.ENDLINE)
 
 			if linkedingen and yamlcontents["CompanyID"] != '':
 					companyid = yamlcontents["CompanyID"]
@@ -124,14 +129,14 @@ if useyamlfile != '':
 			elif linkedingen and args.linkedin_username is None:
 				linkedin_username = input("LinkedIn Username: ")
 			else:
-				print(bcolors.NONERED + '[!] YAML Error with LinkedIn Username... ' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[!] YAML Error with LinkedIn Username... ' + bcolors.ENDLINE)
 
 			if linkedingen and yamlcontents["LinkedInPassword"] != '':
 				linkedin_password = yamlcontents["LinkedInPassword"]
 			elif linkedingen and args.linkedin_password is None:
 				linkedin_password = getpass.getpass("LinkedIn Password: ")
 			else:
-				print(bcolors.NONERED + '[!] YAML Error with LinkedIn Password... ' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[!] YAML Error with LinkedIn Password... ' + bcolors.ENDLINE)
 
 		if hunterIO:
 			if hunterIO and yamlcontents["HunterIODomain"] != '':
@@ -139,14 +144,14 @@ if useyamlfile != '':
 			elif hunterIO and args.hunterDomain is None:
 				hunterDomain = input("Hunter.io Domain to Query: ")
 			else:
-				print(bcolors.NONERED + '[!] YAML Error with HunterIO Domain... ' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[!] YAML Error with HunterIO Domain... ' + bcolors.ENDLINE)
 
 			if hunterIO and yamlcontents["HunterIOKey"] != '':
 				hunterApiKey = yamlcontents["HunterIOKey"]
 			elif hunterIO and args.hunterApiKey is None:
 				hunterApiKey = input("Hunter.io API Key: ")
 			else:
-				print(bcolors.NONERED + '[!] YAML Error with HunterIO API Key... ' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[!] YAML Error with HunterIO API Key... ' + bcolors.ENDLINE)
 
 		if usstaff:
 			if usstaff and yamlcontents["USStaffCompanyName"] != '':
@@ -154,7 +159,7 @@ if useyamlfile != '':
 			elif usstaff and args.usstaffcompany == '':
 				usstaffcompany = input("USStaff Name: ")
 			else:
-				print(bcolors.NONERED + '[!] YAML Error with USStaff Company... ' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[!] YAML Error with USStaff Company... ' + bcolors.ENDLINE)
 
 		if phonebookCZ:
 			if phonebookCZ and yamlcontents["PhonebookDomain"] != '':
@@ -162,17 +167,17 @@ if useyamlfile != '':
 			elif phonebookCZ and args.phonebookTargetDomain == '':
 				phonebookTargetDomain = input("Phonebook Target Domain: ")
 			else:
-				print(bcolors.NONERED + '[!] YAML Error with Phonebook CZ Domain... ' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[!] YAML Error with Phonebook CZ Domain... ' + bcolors.ENDLINE)
 
 			if phonebookCZ and yamlcontents["intelXAPIKey"] != '':
 				intelAPIKey = yamlcontents["intelXAPIKey"]
 			elif phonebookCZ and args.intelAPIKey == '':
 				intelAPIKey = input("Phonebook API Key: ")
 			else:
-				print(bcolors.NONERED + '[!] YAML Error with Phonebook CZ API Key... ' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[!] YAML Error with Phonebook CZ API Key... ' + bcolors.ENDLINE)
 
 	else:
-		print(bcolors.NONERED + '[!] YAML file does not exist, exiting....' + bcolors.ENDLINE)
+		print(bcolors.WARNYELL + '[!] YAML file does not exist, exiting....' + bcolors.ENDLINE)
 		sys.exit()
 
 else:
@@ -196,7 +201,7 @@ else:
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/114.0'
 
 if outputfile == '' and not printnames:
-	print(bcolors.NONERED + '[!] No output option select, choose an output file (-o) or print to screen (-pn)... ' + bcolors.ENDLINE)
+	print(bcolors.WARNYELL + '[!] No output option select, choose an output file (-o) or print to screen (-pn)... ' + bcolors.ENDLINE)
 	sys.exit()
 
 linkedInNamesList = []
@@ -216,15 +221,15 @@ def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 		hunterAvailableSearches = int(hunterAccountInformation["requests"]["searches"]["available"])
 		hunterUsedSearches = int(hunterAccountInformation["requests"]["searches"]["used"])
 		hunterRemainingSearches = str(hunterAvailableSearches - hunterUsedSearches)
-		hunterContinue = input(bcolors.NONERED + '[!] ' + hunterRemainingSearches + ' Searches Remaining, Continue? [Y/n] ' + bcolors.ENDLINE)
+		hunterContinue = input(bcolors.WARNYELL + '[!] ' + hunterRemainingSearches + ' Searches Remaining, Continue? [Y/n] ' + bcolors.ENDLINE)
 		if hunterContinue == "y" or hunterContinue == "Y" or hunterContinue == "":
 			hunterContinue = True
 		elif hunterContinue == "n" or hunterContinue == "N":
 			hunterContinue = False
-			print(bcolors.NONERED + '\n[!] Not pulling names from Hunter.IO\n' + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + '\n[!] Not pulling names from Hunter.IO\n' + bcolors.ENDLINE)
 			return
 		else:
-			print(bcolors.NONERED + '\n[!] Not a valid option, not pulling names from Hunter.IO\n' + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + '\n[!] Not a valid option, not pulling names from Hunter.IO\n' + bcolors.ENDLINE)
 			return
 
 		domainSearchHunterJson = hunter.domain_search(hunterDomain)
@@ -232,14 +237,14 @@ def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 		hunterPlanname = hunterAccountInformation['plan_name']
 		if domainHunterPattern == None:
 			domainHunterPattern = 'No pattern identified in Hunter.IO'
-		print(bcolors.OKGREEN + '\n[+] Email Pattern Identified: ' + str(domainHunterPattern) + '\n' + bcolors.ENDLINE)
+		print(bcolors.OKGREEN + '\n[+] Email Pattern Identified: ' + str(domainHunterPattern) + bcolors.ENDLINE)
 
+		hunterDomainSearchJSONCreate = json.dumps(domainSearchHunterJson)
+		hunterDomainSearchJSONObject = json.loads(hunterDomainSearchJSONCreate)
+		listJSONObjectEmails = hunterDomainSearchJSONObject['emails']
+		print(bcolors.OKGREEN + '\n[+] Hunter.IO ' + hunterPlanname + ' plan identified\n' + bcolors.ENDLINE)
+  
 		with yaspin.yaspin(text=" - Running Hunter.IO Enumeration"):
-			hunterDomainSearchJSONCreate = json.dumps(domainSearchHunterJson)
-			hunterDomainSearchJSONObject = json.loads(hunterDomainSearchJSONCreate)
-			listJSONObjectEmails = hunterDomainSearchJSONObject['emails']
-			print(bcolors.OKGREEN + '\n[+] Hunter.IO ' + hunterPlanname + ' plan identified\n' + bcolors.ENDLINE)
-
 			for emailKey in listJSONObjectEmails:
 				firstName = emailKey['first_name']
 				lastName = emailKey['last_name']
@@ -250,7 +255,7 @@ def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 					hunterNamesList.append(str(finalName))
 	except Exception as hunterexception:
 		if debugMode:
-			print(bcolors.NONERED + "[DEBUG] Hunter module exception: " + hunterexception + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + "[DEBUG] Hunter module exception: " + hunterexception + bcolors.ENDLINE)
 			sys.exit()
 		else: 
 			pass
@@ -332,7 +337,7 @@ def usStaffMama(company): # Special thanks to bigb0sss for the USStaff function
 						usStaffNamesList.append(str(fname + " " + lname))
 	except Exception as usstaffexception:
 		if debugMode:
-			print(bcolors.NONERED + "[DEBUG] USStaff module exception: " + usstaffexception + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + "[DEBUG] USStaff module exception: " + usstaffexception + bcolors.ENDLINE)
 			sys.exit()
 		else: 
 			pass
@@ -343,15 +348,15 @@ def phonebookCZFunc(phonebookTargetDomain, intelAPIKey):
 		creditsLeft = ix.GET_CAPABILITIES()["paths"]["/phonebook/search"]["Credit"]
 		creditsTotal = ix.GET_CAPABILITIES()["paths"]["/phonebook/search"]["CreditMax"]
 		phonebookCredits = str(creditsLeft) + "/" + str(creditsTotal)
-		phonebookContinue = input(bcolors.NONERED + '[!] ' + phonebookCredits + ' Phonebook Searches Remaining, Continue? [Y/n] ' + bcolors.ENDLINE)
+		phonebookContinue = input(bcolors.WARNYELL + '[!] ' + phonebookCredits + ' Phonebook Searches Remaining, Continue? [Y/n] ' + bcolors.ENDLINE)
 		if phonebookContinue == "y" or phonebookContinue == "Y" or phonebookContinue == "":
 			phonebookContinue = True
 		elif phonebookContinue == "n" or phonebookContinue == "N":
 			phonebookContinue = False
-			print(bcolors.NONERED + '\n[!] Not pulling names from Phonebook\n' + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + '\n[!] Not pulling names from Phonebook\n' + bcolors.ENDLINE)
 			return
 		else:
-			print(bcolors.NONERED + '\n[!] Not a valid option, not pulling names from Phonebook\n' + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + '\n[!] Not a valid option, not pulling names from Phonebook\n' + bcolors.ENDLINE)
 			return
 
 		with yaspin.yaspin(text=" - Running PhoneBook.CZ Enumeration"):
@@ -364,7 +369,7 @@ def phonebookCZFunc(phonebookTargetDomain, intelAPIKey):
 
 	except Exception as phonebookexception:
 		if debugMode:
-			print(bcolors.NONERED + "[DEBUG] PhoneBook.cz module exception: " + phonebookexception + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + "[DEBUG] PhoneBook.cz module exception: " + phonebookexception + bcolors.ENDLINE)
 			sys.exit()
 		else: 
 			pass
@@ -380,12 +385,17 @@ def statlikelyCreator(): # Thank you AchocolatechipPancake for the addition
 			statlikelyNamesList.append(str(statlikelyFullName))
 	except Exception as statlikelyexception:
 		if debugMode:
-			print(bcolors.NONERED + "[DEBUG] Stat Likely module exception: " + statlikelyexception + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + "[DEBUG] Stat Likely module exception: " + statlikelyexception + bcolors.ENDLINE)
 			sys.exit()
 		else: 
 			pass
 
 def linkedInGen():
+	global retrySecCheck
+	if retrySecCheck >= linkedInRetryAmount:
+		print(bcolors.WARNYELL + '[-] LinkedIn Security Check Implemented, ' + str(linkedInRetryAmount) + ' retries attemped and failed. Please use README for more info.' + bcolors.ENDLINE)
+		sys.exit(0)
+  
 	try:
 		global companyid
 		# Create Login Session and Hold Cookies
@@ -398,21 +408,23 @@ def linkedInGen():
 			if cookie.name == "bcookie":
 				csrfCookie = str(cookie.value.split('&')[1][:-1])
 				if csrfCookie is None:
-					print(bcolors.NONERED + '[-] Failed to pull CSRF token' + bcolors.ENDLINE)
+					print(bcolors.WARNYELL + '[-] Failed to pull CSRF token' + bcolors.ENDLINE)
 
 		# Condcut Login and Store in Session
 		loginData = {"session_key": linkedin_username, "session_password": linkedin_password, "isJsEnabled": "false", "loginCsrfParam": csrfCookie}
 		loginRequest = linkedinSession.post("https://www.linkedin.com/checkpoint/lg/login-submit", data=loginData, timeout=timeout, verify=False)
 
 		if "<title>Security Verification | LinkedIn</title>" in loginRequest.content.decode("utf-8"):
-			print(bcolors.NONERED + '[-] LinkedIn Security Check Implemented, try again (check README for more information)' + bcolors.ENDLINE)
-			sys.exit(0)
+			retrySecCheck += 1
+			if debugMode:
+				print(bcolors.OKGREEN + '[DBUG] LinkedIn Security Check Bypass Attempt #' + str(retrySecCheck) + bcolors.ENDLINE)
+			linkedInGen()
 		else:
 			if 'li_at' in linkedinSession.cookies.get_dict():
 				if debugMode:
 					print(bcolors.OKGREEN + '[+] LinkedIn Login Successful' + bcolors.ENDLINE)
 			else:
-				print(bcolors.NONERED + '[-] Login Unsuccessful... Exiting' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[-] Login Unsuccessful... Exiting' + bcolors.ENDLINE)
 				sys.exit(0)
 
 		specialCookieList = ''
@@ -490,13 +502,13 @@ def linkedInGen():
 
 				except Exception as linkedinuserexception:
 					if debugMode:
-						print(bcolors.NONERED + "[DEBUG] LinkedIn user module exception: " + linkedinuserexception + bcolors.ENDLINE)
+						print(bcolors.WARNYELL + "[DEBUG] LinkedIn user module exception: " + linkedinuserexception + bcolors.ENDLINE)
 						sys.exit()
 					else:
 						pass
 	except Exception as linkedinexception:
 		if debugMode:
-			print(bcolors.NONERED + "[DEBUG] LinkedIn module exception: " + linkedinexception + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + "[DEBUG] LinkedIn module exception: " + linkedinexception + bcolors.ENDLINE)
 			sys.exit()
 		else:
 			pass
@@ -558,15 +570,15 @@ def main_generator():
 
 	if outputfile != '':
 		if os.path.exists(outputfile):
-			del_outfile = input(bcolors.NONERED + '[!] Output File exists, overwrite? [Y/n] ' + bcolors.ENDLINE)
+			del_outfile = input(bcolors.WARNYELL + '[!] Output File exists, overwrite? [Y/n] ' + bcolors.ENDLINE)
 			print('\n')
 			if del_outfile == 'y' or 'Y' or '':
 				os.remove(outputfile)
 			elif del_outfile == 'n' or 'N':
-				print(bcolors.NONERED + '[-] Not overwriting file, exiting...' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[-] Not overwriting file, exiting...' + bcolors.ENDLINE)
 				sys.exit()
 			else:
-				print(bcolors.NONERED + '[!] Not a valid option, exiting...' + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + '[!] Not a valid option, exiting...' + bcolors.ENDLINE)
 				sys.exit()
 
 	if linkedingen:
@@ -575,7 +587,7 @@ def main_generator():
 			linkedInGen()
 			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(linkedInNamesList)) + ' LinkedIn Employees\n' + bcolors.ENDLINE)
 		except:
-			print(bcolors.NONERED + "[!] Errors Pulling LinkedIn Names" + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + "[!] Errors Pulling LinkedIn Names" + bcolors.ENDLINE)
 			pass
 
 	if hunterIO:
@@ -584,7 +596,7 @@ def main_generator():
 			hunterPull(hunterApiKey, hunterDomain, hunterNamesList)
 			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(hunterNamesList)) + ' Hunter.io Employees\n' + bcolors.ENDLINE)
 		except:
-			print(bcolors.NONERED + "[!] Errors Pulling Hunter.io Emails" + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + "[!] Errors Pulling Hunter.io Emails" + bcolors.ENDLINE)
 			pass
 
 	if usstaff:
@@ -594,7 +606,7 @@ def main_generator():
 				usStaffMama(usstaffcompany)
 			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(usStaffNamesList)) + ' USStaff Employees\n' + bcolors.ENDLINE)
 		except:
-			print(bcolors.NONERED + "[!] Errors scraping USStaff names" + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + "[!] Errors scraping USStaff names" + bcolors.ENDLINE)
 			pass
 
 	if phonebookCZ:
@@ -603,7 +615,7 @@ def main_generator():
 			phonebookCZFunc(phonebookTargetDomain, intelAPIKey)
 			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(phonebookNamesList)) + ' Employees from Phonebook\n' + bcolors.ENDLINE)
 		except:
-			print(bcolors.NONERED + "[!] Errors pulling Phonebook names" + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + "[!] Errors pulling Phonebook names" + bcolors.ENDLINE)
 			pass
 
 	if statlikely:
@@ -612,10 +624,10 @@ def main_generator():
 			statlikelyContinue = True
 		elif statlikelyContinue == "n" or statlikelyContinue == "N":
 			statlikelyContinue = False
-			print(bcolors.NONERED + '\n[!] Not pulling names from Statistically Likely\n' + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + '\n[!] Not pulling names from Statistically Likely\n' + bcolors.ENDLINE)
 			return
 		else:
-			print(bcolors.NONERED + '\n[!] Not a valid option, not pulling names from Statistically Likely\n' + bcolors.ENDLINE)
+			print(bcolors.WARNYELL + '\n[!] Not a valid option, not pulling names from Statistically Likely\n' + bcolors.ENDLINE)
 			return
 		if statlikelyContinue:
 			try:
@@ -624,18 +636,18 @@ def main_generator():
 					statlikelyCreator()
 				print(bcolors.OKGREEN + '[+] Pulled 248,231 Statistically Likely Names\n' + bcolors.ENDLINE)
 			except:
-				print(bcolors.NONERED + "[!] Errors pulling Statistically Likely Names" + bcolors.ENDLINE)
+				print(bcolors.WARNYELL + "[!] Errors pulling Statistically Likely Names" + bcolors.ENDLINE)
 				pass
 
 	if len(linkedInNamesList) == 0 and len(usStaffNamesList) == 0 and len(hunterNamesList) == 0 and len(phonebookNamesList) == 0 and len(statlikelyNamesList) == 0:
-		print(bcolors.NONERED + "[!] No names obtained, Exiting...\n" + bcolors.ENDLINE)
+		print(bcolors.WARNYELL + "[!] No names obtained, Exiting...\n" + bcolors.ENDLINE)
 		sys.exit()
 
 	printNamesModifierList = linkedInNamesList + hunterNamesList + usStaffNamesList + statlikelyNamesList
 	printNamesModifierList = list(set(printNamesModifierList))
 	for potentialName in printNamesModifierList:
 		finalPotentialName = unidecode.unidecode(potentialName.capitalize())
-		printNamesFullList.append(str(finalPotentialName))
+		printNamesFullList.append(str(finalPotentialName).lower())
 	mangler(mangleMode, printNamesFullList)
 
 	totalPotentialUsers = int(len(printNamesFullList)) + int(len(phonebookNamesList))
