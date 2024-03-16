@@ -1,26 +1,30 @@
-# NameSpi - v1.5
+# NameSpi - v1.6
 
 ### Please make sure to read the README before using NameSpi. 
 
-This tool is designed to create a list of employees for the company of your choice. It pulls from your choices of LinkedIn, USStaff, Hunter.io, and Phonebook.cz. Also has the ability to pull and mangle a list of 250k statistically likely names.
-- The LinkedIn functionality pulls employees from the company LinkedIn page based on your connections. The more connections you have the better.
-- The Hunter.io functionality pulls employees names based on your subscription level. The Free version only allows 10. This will also identify the email format if you plan on mangeling names for password guessing.
+This tool is designed to create a list of employees for the company of your choice. It pulls from your choices of LinkedIn, USStaff, Hunter.io, and Phonebook.cz. Also can pull and mangle a list of 250k statistically likely names.
+- The LinkedIn functionality pulls employees from the company LinkedIn page based on your LinkedIn account's connections. The more connections you have the better.
+- The Hunter.io functionality pulls employee names based on your subscription level. The Free version only allows 10. This will also identify the email format if you plan on mangling names for password guessing.
 - The USStaff functionality pulls employee names from https://bearsofficialsstore.com/ (Thanks to #bigb0sss for this one)
 - The phonebook functionality pulls emails from Phonebook.cz using your Developer API key. This is limited to 10 requests a day on the free version. 
-- The statistically likely functionality pulls 250k statiscially like names. (CAUTION: Long List) (Thanks to #AchocolatechipPancake for this one)
-- The script also cleans up the names, removes duplicates, removes accents, changes capitalization for uniformity, and can mangle to the output you want (10 options built in).
+- The statistically likely functionality pulls 250k statistically like names. (CAUTION: Long List) (Thanks to #AchocolatechipPancake for this one)
+- The script also cleans up the names, removes duplicates, removes accents, changes capitalization for uniformity, and can mangle to the output you want (10 options built-in).
+- YAML files are supported. I recommend against putting your LinkedIn password in a YAML file, therefore if you leave that blank, the script will ask for it after it's run.
+- There is a DEBUG mode to help with troubleshooting issues.
 
-**NEW!** NameSpi can take a YAML file as input! I recommend against putting your LinkedIn password in a YAML file, therefore if you leave that blank, the script will ask for it after its ran.  
+<ins>**NEW!**</ins> NameSpi now has the function to attempt a bypass with the LinkedIn Security Captcha. This is set by the '-lir' option and is at a default of 10 attempts. I generally noticed after about 30 attempts you're lost for about an hour.  
 
-**NEW!** NameSpi now has a debug mode to help with troubleshooting errors.  
+<ins>**NEW!**</ins> RED output has been replaced with YELLOW output for readability purposes.  
+
+<ins>**NEW!**</ins> Another measure has been implemented to ensure the output is all lowercase, limiting the number of times a duplicate might appear.  
 
 ------------------------------------------------------------------------------------
 
 ### Notes:
 - LinkedIn module needs to be ran from an IP address that has previously logged into the account you are using, otherwise LinkedIn will send a security code, and this script does not support that.  
-- LinkedIn module can have rate limiting, and a security check (CAPTCHA) can be implemented. If that happens, running the module again can get the desired results.  
+- LinkedIn module can have rate limiting, I implemented a loop to 'bypass' the captcha (-lir) but there can still be issues.   
 - LinkedIn module can pull the CompanyID based on the CompanyName provided. It will supply a list of potential ID's to select from.
-- You do not need to supply EVERY option in the command itself. If you supply any of the collection methods (-li, -hio -uss -pb) and nothing else, the script will ask for the information it requires to complete the function. This is also mentioned below in the **Scraping Options** header.
+- You do not need to supply EVERY option in the command itself. If you supply any collection methods (-li, -hio -uss -pb) and nothing else, the script will ask for the information required to complete the function. This is also mentioned below in the **Scraping Options** header.
 
 ------------------------------------------------------------------------------------
 # Usage
@@ -33,11 +37,11 @@ $ python3 NameSpi.py -h
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| |
  | |\  | (_| | | | | | |  __/___) | |_) | |
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_|
-                                  |_| v1.5
+                                  |_| v1.6
              Author: #Waffl3ss
 
 
-usage: NameSpi.py [-h] [-li] [-hio] [-uss] [-pb] [-sl] [-pbdom PHONEBOOKTARGETDOMAIN] [-iapi INTELAPIKEY] [-o OUTPUTFILE] [-pn] [-c COMPANY] [-id COMPANYID] [-s SLEEP] [-t TIMEOUT] [-user LINKEDIN_USERNAME] [-pass LINKEDIN_PASSWORD] [-hapi HUNTERAPIKEY] [-hdom HUNTERDOMAIN] [-uc USSTAFFCOMPANY] [-m MANGLEMODE] [-mo] [-yaml USEYAMLFILE] [-debug]
+usage: NameSpi.py [-h] [-li] [-hio] [-uss] [-pb] [-sl] [-pbdom PHONEBOOKTARGETDOMAIN] [-iapi INTELAPIKEY] [-o OUTPUTFILE] [-pn] [-c COMPANY] [-id COMPANYID] [-s SLEEP] [-t TIMEOUT] [-user LINKEDIN_USERNAME] [-pass LINKEDIN_PASSWORD] [-hapi HUNTERAPIKEY] [-hdom HUNTERDOMAIN] [-uc USSTAFFCOMPANY] [-m MANGLEMODE] [-mo] [-yaml USEYAMLFILE] [-debug] [-lir]
 
 options:
   -h, --help            show this help message and exit
@@ -66,6 +70,7 @@ options:
   -mo                   List Mangle Mode Options
   -yaml USEYAMLFILE     Use YAML input file with options
   -debug                Turn on debug mode for error output
+  -lir                  Amount of times to attempt the LinkedIn Security bypass
 
 ```
 ### Examples
@@ -93,7 +98,7 @@ $ ./NameSpi.py -li -hio -uss -pb
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
  | |\  | (_| | | | | | |  __/___) | |_) | | 
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.5
+                                  |_| v1.6
              Author: #Waffl3ss
 
 
