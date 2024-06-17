@@ -7,8 +7,8 @@ from bs4 import BeautifulSoup
 import json, math, argparse, re, sys, os, urllib3, requests, getpass, unidecode, httpimport, yaml, yaspin, time
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-with httpimport.remote_repo('https://raw.githubusercontent.com/IntelligenceX/SDK/master/Python/'):
-	from intelxapi import intelx
+with httpimport.remote_repo('https://github.com/IntelligenceX/SDK#subdirectory=Python'):
+        from intelxapi import intelx
 
 banner = """
   _   _                      ____        _ 
