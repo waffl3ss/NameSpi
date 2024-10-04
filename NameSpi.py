@@ -3,32 +3,24 @@
 from __future__ import division
 from argparse import RawTextHelpFormatter
 from pyhunter import PyHunter
-from bs4 import BeautifulSoup
-import json, math, argparse, re, sys, os, urllib3, requests, getpass, unidecode, httpimport, yaml, yaspin, time
+import json, math, argparse, sys, os, urllib3, requests, getpass, unidecode, yaml, yaspin, time, logging
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-with httpimport.remote_repo('https://github.com/IntelligenceX/SDK#subdirectory=Python'):
-        from intelxapi import intelx
-
 banner = """
-  _   _                      ____        _ 
- | \ | | __ _ _ __ ___   ___/ ___| _ __ (_) 
- |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
- | |\  | (_| | | | | | |  __/___) | |_) | | 
- |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.6 
-             Author: #Waffl3ss \n\n"""
+ _   _                      ____        _ 
+| \ | | __ _ _ __ ___   ___/ ___| _ __ (_) 
+|  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
+| |\  | (_| | | | | | |  __/___) | |_) | | 
+|_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
+                                 |_| v1.7 
+        Author: #Waffl3ss \n\n"""
 print(banner)
 
 # Parse user arguments
 parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
 parser.add_argument('-li', dest='linkedingen', default=False, required=False, help="Run the LinkedIn module", action='store_true')
 parser.add_argument('-hio', dest='hunterIO', required=False, default=False, help="Pull Emails from Hunter.io", action='store_true')
-parser.add_argument('-uss', dest='usstaff', required=False, default=False, help="Pull Names from USStaff (https://bearsofficialsstore.com/) Special Thanks: #bigb0sss", action='store_true')
-parser.add_argument('-pb', dest='phonebookCZ', required=False, default=False, help="Pull Names from Phonebook.CZ", action='store_true')
 parser.add_argument('-sl', dest='statlikely', required=False, default=False, help="Use Statistically Likely Usernames in output (CAUTION: Creates a VERY long list) Special Thanks: AchocolatechipPancake", action='store_true')
-parser.add_argument('-pbdom', dest='phonebookTargetDomain', required=False, help="Domain to query Phonebook")
-parser.add_argument('-iapi', dest='intelAPIKey', required=False, help="IntelX API Key")
 parser.add_argument('-o', dest='outputfile', required=False, default='', help="Write output to file")
 parser.add_argument('-pn', dest='printnames', required=False, default=False, help="Print found names to screen", action='store_true')
 parser.add_argument('-c', dest='company', default='', required=False, help="Company to search for")
@@ -39,7 +31,6 @@ parser.add_argument('-user', dest='linkedin_username', required=False, help="Lin
 parser.add_argument('-pass', dest='linkedin_password', required=False, help="LinkedIn.com Authenticated Password")
 parser.add_argument('-hapi', dest='hunterApiKey', required=False, help="Hunter.io API Key")
 parser.add_argument('-hdom', dest='hunterDomain', required=False, help="Domain to query in Hunter.io")
-parser.add_argument('-uc', dest='usstaffcompany', default='', required=False, help="Exact company name on USStaff")
 parser.add_argument('-m', dest='mangleMode', required=False, default=0, help="Mangle Mode (use '-mo' to list mangle options). Only works with an output file (-o)")
 parser.add_argument('-mo', dest='mangleOptions', required=False, default=False, help="List Mangle Mode Options", action="store_true")
 parser.add_argument('-yaml', dest='useyamlfile', required=False, default='', help="Use YAML input file with options")
@@ -63,25 +54,32 @@ linkedin_username = str(args.linkedin_username) # String
 linkedin_password = str(args.linkedin_password) # String
 mangleMode = int(args.mangleMode) # Int
 mangleOptions = args.mangleOptions # Bool
-usstaff = args.usstaff # Bool
-usstaffcompany = str(args.usstaffcompany) # String
-phonebookCZ = args.phonebookCZ # Bool
-phonebookTargetDomain = str(args.phonebookTargetDomain) # String
-intelAPIKey = str(args.intelAPIKey) # String
 useyamlfile = str(args.useyamlfile) # Bool
 statlikely = args.statlikely # Bool
 debugMode = args.debugMode # Bool
 linkedInRetryAmount = int(args.linkedInRetryAmount) # Int
 retrySecCheck = 1
+retryLILogin = 1
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='namespi.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
+logger.addHandler(console_handler)
+
+if debugMode:
+	logger.setLevel(logging.DEBUG)
+	console_handler.setLevel(logging.DEBUG)
+	console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
 
 # Colors for terminal output because Waffles likes pretty things
 class bcolors:
-        OKGREEN = '\033[92m'
-        BOLD = '\033[1m'
-        NONERED = '\033[91m'
-        WARNYELL = '\033[93m'
-        ENDLINE = '\033[0m'
-        UNDERLINE = '\033[4m'
+		OKGREEN = '\033[92m'
+		BOLD = '\033[1m'
+		NONERED = '\033[91m'
+		WARNYELL = '\033[93m'
+		ENDLINE = '\033[0m'
+		UNDERLINE = '\033[4m'
 
 if mangleOptions:
 	print('  Available Mangle Modes:')
@@ -104,12 +102,9 @@ if useyamlfile != '':
 			try:
 				yamlcontents = yaml.safe_load(yamlfile)
 			except Exception as yamlexception:
-				if debugMode:
-					print(bcolors.WARNYELL + "[DEBUG] YAML module exception: " + yamlexception + bcolors.ENDLINE)
-					sys.exit()
-				else: 
-					print(bcolors.WARNYELL + "[!] YAML File Error... Exiting... "+ bcolors.ENDLINE)
-					sys.exit()
+				logger.debug(f"YAML module exception: {yamlexception}")
+				logger.error("YAML File Error... Exiting... ")
+				sys.exit()
 
 		if linkedingen:
 			if linkedingen and yamlcontents["CompanyID"] == '' and yamlcontents["CompanyName"] != '':
@@ -119,7 +114,7 @@ if useyamlfile != '':
 			elif linkedingen and yamlcontents["CompanyID"] != '':
 					companyid = yamlcontents["CompanyID"]
 			else:
-					print(bcolors.WARNYELL + '[!] YAML Error getting Company Name... ' + bcolors.ENDLINE)
+					logger.error("YAML Error getting Company Name... ")
 
 			if linkedingen and yamlcontents["CompanyID"] != '':
 					companyid = yamlcontents["CompanyID"]
@@ -129,14 +124,14 @@ if useyamlfile != '':
 			elif linkedingen and args.linkedin_username is None:
 				linkedin_username = input("LinkedIn Username: ")
 			else:
-				print(bcolors.WARNYELL + '[!] YAML Error with LinkedIn Username... ' + bcolors.ENDLINE)
+				logger.error("YAML Error with LinkedIn Username... ")
 
 			if linkedingen and yamlcontents["LinkedInPassword"] != '':
 				linkedin_password = yamlcontents["LinkedInPassword"]
 			elif linkedingen and args.linkedin_password is None:
 				linkedin_password = getpass.getpass("LinkedIn Password: ")
 			else:
-				print(bcolors.WARNYELL + '[!] YAML Error with LinkedIn Password... ' + bcolors.ENDLINE)
+				logger.error("YAML Error with LinkedIn Password... ")
 
 		if hunterIO:
 			if hunterIO and yamlcontents["HunterIODomain"] != '':
@@ -144,70 +139,38 @@ if useyamlfile != '':
 			elif hunterIO and args.hunterDomain is None:
 				hunterDomain = input("Hunter.io Domain to Query: ")
 			else:
-				print(bcolors.WARNYELL + '[!] YAML Error with HunterIO Domain... ' + bcolors.ENDLINE)
+				logger.error("YAML Error with HunterIO Domain... ")
 
 			if hunterIO and yamlcontents["HunterIOKey"] != '':
 				hunterApiKey = yamlcontents["HunterIOKey"]
 			elif hunterIO and args.hunterApiKey is None:
 				hunterApiKey = input("Hunter.io API Key: ")
 			else:
-				print(bcolors.WARNYELL + '[!] YAML Error with HunterIO API Key... ' + bcolors.ENDLINE)
-
-		if usstaff:
-			if usstaff and yamlcontents["USStaffCompanyName"] != '':
-				usstaffcompany = yamlcontents["USStaffCompanyName"]
-			elif usstaff and args.usstaffcompany == '':
-				usstaffcompany = input("USStaff Name: ")
-			else:
-				print(bcolors.WARNYELL + '[!] YAML Error with USStaff Company... ' + bcolors.ENDLINE)
-
-		if phonebookCZ:
-			if phonebookCZ and yamlcontents["PhonebookDomain"] != '':
-				phonebookTargetDomain = yamlcontents["PhonebookDomain"]
-			elif phonebookCZ and args.phonebookTargetDomain == '':
-				phonebookTargetDomain = input("Phonebook Target Domain: ")
-			else:
-				print(bcolors.WARNYELL + '[!] YAML Error with Phonebook CZ Domain... ' + bcolors.ENDLINE)
-
-			if phonebookCZ and yamlcontents["intelXAPIKey"] != '':
-				intelAPIKey = yamlcontents["intelXAPIKey"]
-			elif phonebookCZ and args.intelAPIKey == '':
-				intelAPIKey = input("Phonebook API Key: ")
-			else:
-				print(bcolors.WARNYELL + '[!] YAML Error with Phonebook CZ API Key... ' + bcolors.ENDLINE)
-
+				logger.error("YAML Error with HunterIO API Key... ")
 	else:
-		print(bcolors.WARNYELL + '[!] YAML file does not exist, exiting....' + bcolors.ENDLINE)
+		logger.error("YAML file does not exist, exiting....")
 		sys.exit()
 
 else:
 	if linkedingen and args.companyid is None and args.company == '':
-		company = input("Company Name: ")
+		company = input("     Company Name: ")
 	if linkedingen and args.linkedin_username is None:
-		linkedin_username = input("LinkedIn Username: ")
+		linkedin_username = input("     LinkedIn Username: ")
 	if linkedingen and args.linkedin_password is None:
-		linkedin_password = getpass.getpass("LinkedIn Password: ")
+		linkedin_password = getpass.getpass("     LinkedIn Password: ")
 	if hunterIO and args.hunterDomain is None:
-		hunterDomain = input("Hunter.io Domain to Query: ")
+		hunterDomain = input("     Hunter.io Domain to Query: ")
 	if hunterIO and args.hunterApiKey is None:
-		hunterApiKey = input("Hunter.io API Key: ")
-	if usstaff and args.usstaffcompany is None:
-		usstaffcompany = input("USStaff Name: ")
-	if phonebookCZ and args.phonebookTargetDomain is None:
-		phonebookTargetDomain = input("Phonebook Target Domain: ")
-	if phonebookCZ and args.intelAPIKey is None:
-		intelAPIKey = input("Phonebook API Key: ")
+		hunterApiKey = input("     Hunter.io API Key: ")
 
 user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/114.0'
 
 if outputfile == '' and not printnames:
-	print(bcolors.WARNYELL + '[!] No output option select, choose an output file (-o) or print to screen (-pn)... ' + bcolors.ENDLINE)
+	logger.error("No output option select, choose an output file (-o) or print to screen (-pn)... ")
 	sys.exit()
 
 linkedInNamesList = []
 hunterNamesList = []
-usStaffNamesList = []
-phonebookNamesList = []
 printNamesModifierList = []
 printNamesFullList = []
 mangledNamesList = []
@@ -221,15 +184,16 @@ def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 		hunterAvailableSearches = int(hunterAccountInformation["requests"]["searches"]["available"])
 		hunterUsedSearches = int(hunterAccountInformation["requests"]["searches"]["used"])
 		hunterRemainingSearches = str(hunterAvailableSearches - hunterUsedSearches)
-		hunterContinue = input(bcolors.WARNYELL + '[!] ' + hunterRemainingSearches + ' Searches Remaining, Continue? [Y/n] ' + bcolors.ENDLINE)
+		hunterContinue = input(f'\n{hunterRemainingSearches} Searches Remaining, Continue? [Y/n] ')
+		print('\n')
 		if hunterContinue == "y" or hunterContinue == "Y" or hunterContinue == "":
 			hunterContinue = True
 		elif hunterContinue == "n" or hunterContinue == "N":
 			hunterContinue = False
-			print(bcolors.WARNYELL + '\n[!] Not pulling names from Hunter.IO\n' + bcolors.ENDLINE)
+			logger.error("Not pulling names from Hunter.IO")
 			return
 		else:
-			print(bcolors.WARNYELL + '\n[!] Not a valid option, not pulling names from Hunter.IO\n' + bcolors.ENDLINE)
+			logger.error("Not a valid option, not pulling names from Hunter.IO")
 			return
 
 		domainSearchHunterJson = hunter.domain_search(hunterDomain)
@@ -237,13 +201,13 @@ def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 		hunterPlanname = hunterAccountInformation['plan_name']
 		if domainHunterPattern == None:
 			domainHunterPattern = 'No pattern identified in Hunter.IO'
-		print(bcolors.OKGREEN + '\n[+] Email Pattern Identified: ' + str(domainHunterPattern) + bcolors.ENDLINE)
+		logger.info(f"Email Pattern Identified: {domainHunterPattern}")
 
 		hunterDomainSearchJSONCreate = json.dumps(domainSearchHunterJson)
 		hunterDomainSearchJSONObject = json.loads(hunterDomainSearchJSONCreate)
 		listJSONObjectEmails = hunterDomainSearchJSONObject['emails']
-		print(bcolors.OKGREEN + '\n[+] Hunter.IO ' + hunterPlanname + ' plan identified\n' + bcolors.ENDLINE)
-  
+		logger.info(f"Hunter.IO {hunterPlanname} plan identified")
+
 		with yaspin.yaspin(text=" - Running Hunter.IO Enumeration"):
 			for emailKey in listJSONObjectEmails:
 				firstName = emailKey['first_name']
@@ -254,127 +218,10 @@ def hunterPull(hunterApiKey, hunterDomain, hunterNamesList):
 					finalName = firstName.capitalize() + " " + lastName.capitalize()
 					hunterNamesList.append(str(finalName))
 	except Exception as hunterexception:
-		if debugMode:
-			print(bcolors.WARNYELL + "[DEBUG] Hunter module exception: " + hunterexception + bcolors.ENDLINE)
-			sys.exit()
-		else: 
-			pass
+		logger.debug(f"Hunter module exception: {hunterexception}")
+		pass
 
-def usStaffMama(company): # Special thanks to bigb0sss for the USStaff function
-	try:
-		usstaff_url = "https://bearsofficialsstore.com/company/%s/page1" % company
-		r = requests.get(usstaff_url)
-
-		if r.status_code != 200:
-			print("[!] 404 Error! The company name needs to be verified for USStaff. Go to https://bearsofficialsstore.com/ and find the EXACT company name (e.g., t-mobile != t_mobile)")
-			pass
-
-		content = (r.text)
-		contentSoup = BeautifulSoup(content, 'html.parser')
-
-		for i in contentSoup.find_all('a'):
-			page = i.get('href')
-			if "page" in page:
-				match = re.search('page([0-9]*)', page)
-			else:
-				match = None
-		if match == None:
-			lastPage = 1
-			lastPageNum = 2
-		else:
-			lastPage = match.group()[4:]
-			lastPage = int(lastPage)
-			lastPageNum = lastPage + 1
-
-		for page in range(1, lastPageNum):
-			usstaff_url2 = "https://bearsofficialsstore.com/company/%s/page%s" % (company, page)
-
-			r = requests.get(usstaff_url2)
-			content = (r.text)
-			contentSoup = BeautifulSoup(content, 'html.parser')
-
-			for j in contentSoup.find_all("img"):
-				if 'id="imgCompanyLogo"' in str(j):
-					continue
-				else:
-					raw = j.get('alt').lower().split()
-
-					if len(raw) >= 2:
-						firstName = raw[0]
-						lastName = raw[1:]
-
-						name = firstName + " " + lastName[0]
-
-						fname = ""
-						mname = ""
-						lname = ""
-
-						if len(lastName) == 1:
-							fname = firstName
-							mname = '?'
-							lname = lastName[0]
-						elif len(lastName) == 2:
-							fname = firstName
-							mname = lastName[0]
-							lname = lastName[1]
-						else:
-							fname = firstName
-							lname = lastName[0]
-
-						fname = re.sub('[^A-Za-z]+', '', fname)
-						mname = re.sub('[^A-Za-z]+', '', mname)
-						lname = re.sub('[^A-Za-z]+', '', lname)
-
-						if len(fname) <= 1 or len(lname) <= 1:
-							continue
-					else:
-						continue
-
-					if mname != "":
-						usStaffNamesList.append(str(fname + " " + lname))
-						usStaffNamesList.append(str(fname + " " + mname))
-					else:
-						usStaffNamesList.append(str(fname + " " + lname))
-	except Exception as usstaffexception:
-		if debugMode:
-			print(bcolors.WARNYELL + "[DEBUG] USStaff module exception: " + usstaffexception + bcolors.ENDLINE)
-			sys.exit()
-		else: 
-			pass
-
-def phonebookCZFunc(phonebookTargetDomain, intelAPIKey):
-	try:
-		ix = intelx(intelAPIKey)
-		creditsLeft = ix.GET_CAPABILITIES()["paths"]["/phonebook/search"]["Credit"]
-		creditsTotal = ix.GET_CAPABILITIES()["paths"]["/phonebook/search"]["CreditMax"]
-		phonebookCredits = str(creditsLeft) + "/" + str(creditsTotal)
-		phonebookContinue = input(bcolors.WARNYELL + '[!] ' + phonebookCredits + ' Phonebook Searches Remaining, Continue? [Y/n] ' + bcolors.ENDLINE)
-		if phonebookContinue == "y" or phonebookContinue == "Y" or phonebookContinue == "":
-			phonebookContinue = True
-		elif phonebookContinue == "n" or phonebookContinue == "N":
-			phonebookContinue = False
-			print(bcolors.WARNYELL + '\n[!] Not pulling names from Phonebook\n' + bcolors.ENDLINE)
-			return
-		else:
-			print(bcolors.WARNYELL + '\n[!] Not a valid option, not pulling names from Phonebook\n' + bcolors.ENDLINE)
-			return
-
-		with yaspin.yaspin(text=" - Running PhoneBook.CZ Enumeration"):
-			PhonebookSearchFunction = ix.phonebooksearch(phonebookTargetDomain, maxresults=100000, buckets=[], timeout=5, datefrom="", dateto="", sort=4, media=0, terminate=[], target=2)
-			for block in PhonebookSearchFunction:
-				for result in block['selectors']:
-					if result['selectortype'] == 1:
-						splitEmailAddress = result['selectorvalue'].split("@")
-						phonebookNamesList.append(str(splitEmailAddress[0]))
-
-	except Exception as phonebookexception:
-		if debugMode:
-			print(bcolors.WARNYELL + "[DEBUG] PhoneBook.cz module exception: " + phonebookexception + bcolors.ENDLINE)
-			sys.exit()
-		else: 
-			pass
-
-def statlikelyCreator(): # Thank you AchocolatechipPancake for the addition
+def statlikelyCreator(): 
 	try:
 		statlikelyList = requests.get("https://github.com/insidetrust/statistically-likely-usernames/raw/master/john.smith.txt", allow_redirects=True, verify=False)
 		for nameLine in statlikelyList.iter_lines():
@@ -384,18 +231,20 @@ def statlikelyCreator(): # Thank you AchocolatechipPancake for the addition
 			statlikelyFullName = str(statlikelyFirstName) + " " + str(statlikelyLastName)
 			statlikelyNamesList.append(str(statlikelyFullName))
 	except Exception as statlikelyexception:
-		if debugMode:
-			print(bcolors.WARNYELL + "[DEBUG] Stat Likely module exception: " + statlikelyexception + bcolors.ENDLINE)
-			sys.exit()
-		else: 
-			pass
+		logger.debug(f"Stat Likely module exception: {statlikelyexception}")
+		pass
 
 def linkedInGen():
 	global retrySecCheck
+	global retryLILogin
 	if retrySecCheck >= linkedInRetryAmount:
-		print(bcolors.WARNYELL + '[-] LinkedIn Security Check Implemented, ' + str(linkedInRetryAmount) + ' retries attemped and failed. Please use README for more info.' + bcolors.ENDLINE)
+		logger.error(f'LinkedIn Security Check Implemented, {linkedInRetryAmount} retries attemped and failed. Please use the README for more info.')
 		sys.exit(0)
-  
+
+	if retryLILogin >= 6:
+		logger.error('Attempted to login to LinkedIn 5 times with no success. Please use the README for more info. ')
+		sys.exit(0)
+
 	try:
 		global companyid
 		# Create Login Session and Hold Cookies
@@ -408,25 +257,25 @@ def linkedInGen():
 			if cookie.name == "bcookie":
 				csrfCookie = str(cookie.value.split('&')[1][:-1])
 				if csrfCookie is None:
-					print(bcolors.WARNYELL + '[-] Failed to pull CSRF token' + bcolors.ENDLINE)
+					logger.error('Failed to pull CSRF token')
 
-		# Condcut Login and Store in Session
+		# Conduct Login and Store in Session
 		loginData = {"session_key": linkedin_username, "session_password": linkedin_password, "isJsEnabled": "false", "loginCsrfParam": csrfCookie}
 		loginRequest = linkedinSession.post("https://www.linkedin.com/checkpoint/lg/login-submit", data=loginData, timeout=timeout, verify=False)
 
 		if "<title>Security Verification | LinkedIn</title>" in loginRequest.content.decode("utf-8"):
 			retrySecCheck += 1
-			if debugMode:
-				print(bcolors.OKGREEN + '[DBUG] LinkedIn Security Check Bypass Attempt #' + str(retrySecCheck) + bcolors.ENDLINE)
+			logger.debug(f'LinkedIn Security Check Bypass Attempt #{retrySecCheck}')
 			linkedInGen()
 		else:
 			if 'li_at' in linkedinSession.cookies.get_dict():
-				if debugMode:
-					print(bcolors.OKGREEN + '[+] LinkedIn Login Successful' + bcolors.ENDLINE)
+				logger.debug('LinkedIn Login Successful')
 			else:
-				print(bcolors.WARNYELL + '[-] Login Unsuccessful... Exiting' + bcolors.ENDLINE)
-				sys.exit(0)
-
+				retryLILogin += 1
+				logger.debug(f'LinkedIn Login Unsuccessful... Retrying attempt #{retryLILogin}')
+				time.sleep(3)
+				linkedInGen()
+		
 		specialCookieList = ''
 		for cookie in linkedinSession.cookies:
 			if cookie.name == "JSESSIONID":
@@ -443,8 +292,7 @@ def linkedInGen():
 			})
 
 		if (companyid == '' or companyid is None):
-			print(bcolors.OKGREEN + '[+] Pulling Company ID for {:s}\n'.format(company.strip()) + bcolors.ENDLINE)
-
+			logger.info(f'Pulling Company ID for {company.strip()}')
 			query = "includeWebMetadata=true&variables=(start:0,origin:SWITCH_SEARCH_VERTICAL,query:(keywords:" + str(company) + ",flagshipSearchIntent:SEARCH_SRP,queryParameters:List((key:resultType,value:List(COMPANIES))),includeFiltersInResponse:false))&&queryId=voyagerSearchDashClusters.8456d8ebf04d20b152309b0c7cfabee2"
 			req = linkedinSession.get("https://www.linkedin.com/voyager/api/graphql?" + query, verify=False)
 			jsonObject = json.loads(req.content.decode())
@@ -453,11 +301,12 @@ def linkedInGen():
 				try:
 					id = companyObject["trackingUrn"].split(":")[3]
 					companyname = companyObject["title"]["text"]
-					print("{:.<55}: {:s}".format(companyname + " ",id))
+					print("   {:.<55}: {:s}".format(companyname + " ",id))
 				except:
 					pass
 
-			companyid = input("\nSelect company ID value: ")  
+			companyid = input("\n   Select company ID value: ")
+			print('\n')
 
 		employeeSearchQuery = "/voyager/api/graphql?variables=(start:0,origin:COMPANY_PAGE_CANNED_SEARCH,query:(flagshipSearchIntent:SEARCH_SRP,queryParameters:List((key:currentCompany,value:List(" + str(companyid) + ")),(key:resultType,value:List(PEOPLE))),includeFiltersInResponse:false))&&queryId=voyagerSearchDashClusters.c4f33252de52295107ac12f946d34b0d"
 		employeeSearchRequest = linkedinSession.get("https://www.linkedin.com" + employeeSearchQuery, verify=False)
@@ -465,7 +314,7 @@ def linkedInGen():
 
 		count = 0
 		count = jsonUserListObject["data"]["data"]["searchDashClustersByAll"]["metadata"]["totalResultCount"]
-		print(bcolors.OKGREEN + '[+] Found {} possible employees'.format(count) + bcolors.ENDLINE)
+		logger.info(f'Found {count} possible employees\n')
 
 		with yaspin.yaspin(text=" - Running LinkedIn Enumeration"):
 			for countNum in range(0,int((int(math.ceil(count / 10.0)) * 10) / 10)):
@@ -501,17 +350,11 @@ def linkedInGen():
 					time.sleep(sleep)
 
 				except Exception as linkedinuserexception:
-					if debugMode:
-						print(bcolors.WARNYELL + "[DEBUG] LinkedIn user module exception: " + linkedinuserexception + bcolors.ENDLINE)
-						sys.exit()
-					else:
-						pass
+					logger.debug(f'LinkedIn user module exception: {linkedinuserexception}')
+					pass
 	except Exception as linkedinexception:
-		if debugMode:
-			print(bcolors.WARNYELL + "[DEBUG] LinkedIn module exception: " + linkedinexception + bcolors.ENDLINE)
-			sys.exit()
-		else:
-			pass
+		logger.debug(f'LinkedIn module exception: {linkedinexception}')
+		pass
 
 def mangler(mangleMode, nameList):
 	for name in nameList:
@@ -570,119 +413,92 @@ def main_generator():
 
 	if outputfile != '':
 		if os.path.exists(outputfile):
-			del_outfile = input(bcolors.WARNYELL + '[!] Output File exists, overwrite? [Y/n] ' + bcolors.ENDLINE)
+			del_outfile = input(bcolors.WARNYELL + 'Output File exists, overwrite? [Y/n] ' + bcolors.ENDLINE)
 			print('\n')
 			if del_outfile == 'y' or 'Y' or '':
 				os.remove(outputfile)
 			elif del_outfile == 'n' or 'N':
-				print(bcolors.WARNYELL + '[-] Not overwriting file, exiting...' + bcolors.ENDLINE)
+				logger.error('Not overwriting file, exiting...')
 				sys.exit()
 			else:
-				print(bcolors.WARNYELL + '[!] Not a valid option, exiting...' + bcolors.ENDLINE)
+				logger.error('Not a valid option, exiting...')
 				sys.exit()
 
 	if linkedingen:
 		try:
-			print(bcolors.OKGREEN + '[+] Pulling Company LinkedIn Employee Names\n' + bcolors.ENDLINE)
+			logger.info('Pulling Company LinkedIn Employee Names')
 			linkedInGen()
-			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(linkedInNamesList)) + ' LinkedIn Employees\n' + bcolors.ENDLINE)
+			logger.info(f'Pulled {len(linkedInNamesList)} LinkedIn Employees')
 		except:
-			print(bcolors.WARNYELL + "[!] Errors Pulling LinkedIn Names" + bcolors.ENDLINE)
+			logger.error('Errors Pulling LinkedIn Names')
 			pass
 
 	if hunterIO:
 		try:
-			print(bcolors.OKGREEN + '[+] Pulling emails from Hunter.io\n' + bcolors.ENDLINE)
+			logger.info('Pulling emails from Hunter.io')
 			hunterPull(hunterApiKey, hunterDomain, hunterNamesList)
-			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(hunterNamesList)) + ' Hunter.io Employees\n' + bcolors.ENDLINE)
+			logger.info(f'Pulled {len(hunterNamesList)} Hunter.io Employees')
 		except:
-			print(bcolors.WARNYELL + "[!] Errors Pulling Hunter.io Emails" + bcolors.ENDLINE)
-			pass
-
-	if usstaff:
-		try:
-			print(bcolors.OKGREEN + '[+] Pulling names from USStaff\n' + bcolors.ENDLINE)
-			with yaspin.yaspin(text=" - Running US Staff Enumeration"):
-				usStaffMama(usstaffcompany)
-			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(usStaffNamesList)) + ' USStaff Employees\n' + bcolors.ENDLINE)
-		except:
-			print(bcolors.WARNYELL + "[!] Errors scraping USStaff names" + bcolors.ENDLINE)
-			pass
-
-	if phonebookCZ:
-		try:
-			print(bcolors.OKGREEN + '[+] Pulling names from Phonebook\n' + bcolors.ENDLINE)
-			phonebookCZFunc(phonebookTargetDomain, intelAPIKey)
-			print(bcolors.OKGREEN + '[+] Pulled ' + str(len(phonebookNamesList)) + ' Employees from Phonebook\n' + bcolors.ENDLINE)
-		except:
-			print(bcolors.WARNYELL + "[!] Errors pulling Phonebook names" + bcolors.ENDLINE)
+			logger.error('Errors Pulling Hunter.io Emails')
 			pass
 
 	if statlikely:
-		statlikelyContinue = input(bcolors.OKGREEN + '[+] Statistically Likely Option enabled, this will generate a VERY long list. Continue? [Y/n] ' + bcolors.ENDLINE)
+		statlikelyContinue = input(bcolors.OKGREEN + '  Statistically Likely Option enabled, this will generate a VERY long list. Continue? [Y/n] ' + bcolors.ENDLINE)
 		if statlikelyContinue == "y" or statlikelyContinue == "Y" or statlikelyContinue == "":
 			statlikelyContinue = True
 		elif statlikelyContinue == "n" or statlikelyContinue == "N":
 			statlikelyContinue = False
-			print(bcolors.WARNYELL + '\n[!] Not pulling names from Statistically Likely\n' + bcolors.ENDLINE)
+			logger.error('Not pulling names from Statistically Likely')
 			return
 		else:
-			print(bcolors.WARNYELL + '\n[!] Not a valid option, not pulling names from Statistically Likely\n' + bcolors.ENDLINE)
+			logger.error('Not a valid option, not pulling names from Statistically Likely')
 			return
 		if statlikelyContinue:
 			try:
-				print(bcolors.OKGREEN + '[+] Pulling names from Statistically Likely\n' + bcolors.ENDLINE)
+				logger.info('Pulling names from Statistically Likely')
 				with yaspin.yaspin(text=" - Running StatLikely Enumeration"):
 					statlikelyCreator()
-				print(bcolors.OKGREEN + '[+] Pulled 248,231 Statistically Likely Names\n' + bcolors.ENDLINE)
+				logger.info('Pulled 248,231 Statistically Likely Names')
 			except:
-				print(bcolors.WARNYELL + "[!] Errors pulling Statistically Likely Names" + bcolors.ENDLINE)
+				logger.error('Errors pulling Statistically Likely Names')
 				pass
 
-	if len(linkedInNamesList) == 0 and len(usStaffNamesList) == 0 and len(hunterNamesList) == 0 and len(phonebookNamesList) == 0 and len(statlikelyNamesList) == 0:
-		print(bcolors.WARNYELL + "[!] No names obtained, Exiting...\n" + bcolors.ENDLINE)
+	if len(linkedInNamesList) == 0 and len(hunterNamesList) == 0 and len(statlikelyNamesList) == 0:
+		logger.error('No names obtained, Exiting...')
 		sys.exit()
 
-	printNamesModifierList = linkedInNamesList + hunterNamesList + usStaffNamesList + statlikelyNamesList
+	printNamesModifierList = linkedInNamesList + hunterNamesList + statlikelyNamesList
 	printNamesModifierList = list(set(printNamesModifierList))
 	for potentialName in printNamesModifierList:
 		finalPotentialName = unidecode.unidecode(potentialName.capitalize())
 		printNamesFullList.append(str(finalPotentialName).lower())
 	mangler(mangleMode, printNamesFullList)
 
-	totalPotentialUsers = int(len(printNamesFullList)) + int(len(phonebookNamesList))
-	totalPotentialUsersMangled = int(len(mangledNamesList)) + int(len(phonebookNamesList))
+	totalPotentialUsers = int(len(printNamesFullList))
+	totalPotentialUsersMangled = int(len(mangledNamesList))
 
 	if outputfile != '':
 		if mangleMode == 0:
 			with open(outputfile, mode='wt', encoding='utf-8') as writeOutFile:
 				writeOutFile.write('\n'.join(printNamesFullList))
-				if phonebookCZ:
-					writeOutFile.write('\n'.join(phonebookNamesList))
 		if mangleMode > 0:
 			with open(outputfile, mode='wt', encoding='utf-8') as writeOutFile:
 				writeOutFile.write('\n'.join(mangledNamesList))
-				if phonebookCZ:
-					writeOutFile.write('\n'.join(phonebookNamesList))
 
 	if printnames:
+		print('\n')
 		if mangleMode == 0:
 			for i in list(printNamesFullList):
 				print(str(i))
-			if phonebookCZ:
-				for n in list(phonebookNamesList):
-					print(str(n))
 		if mangleMode > 0:
 			for i in list(mangledPrintNamesList):
 				print(str(i))
-			if phonebookCZ:
-				for n in list(phonebookNamesList):
-					print(str(n))
+		print('\n')
 
 	if mangleMode == 0:
-		print(bcolors.OKGREEN + '[+] Found a total of ' + str(totalPotentialUsers) + ' potential usernames\n' + bcolors.ENDLINE)
+		logger.info(f'Found a total of {totalPotentialUsers} potential usernames')
 	if mangleMode > 0:
-		print(bcolors.OKGREEN + '[+] Found a total of ' + str(totalPotentialUsersMangled) + ' potential usernames\n' + bcolors.ENDLINE)
+		logger.info(f'Found a total of {totalPotentialUsersMangled} potential usernames')
 
 if __name__ == "__main__":
 	main_generator()
