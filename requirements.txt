@@ -1,5 +1,3 @@
-beautifulsoup4
-httpimport
 pyhunter
 PyYAML
 requests
