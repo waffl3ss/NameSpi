@@ -21,6 +21,23 @@ This tool is designed to create a list of employees for the company of your choi
 
 ------------------------------------------------------------------------------------
 
+### Installation:
+
+```
+pipx install namespi
+```
+[OR]
+```
+pipx install git+https://github.com/waffl3ss/NameSpi
+```
+[OR]
+```
+git clone https://github.com/waffl3ss/NameSpi.git
+cd NameSpi
+pip3 install -r requirements.txt
+```
+------------------------------------------------------------------------------------
+
 ### Notes:
 - LinkedIn module needs to be ran from an IP address that has previously logged into the account you are using, otherwise LinkedIn will send a security code, and this script does not support that.  
 - LinkedIn module can have rate limiting, I implemented a loop to 'bypass' the captcha (-lir) but there can still be issues.   
