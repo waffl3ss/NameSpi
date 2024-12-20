@@ -1,8 +1,8 @@
-# NameSpi - v1.7
+# NameSpi - v1.7.1
 
 ### Please make sure to read the README before using NameSpi. 
 
-v1.7 updates:
+v1.7.1 updates:
 - Phonebook is moving to a paywall, so I've removed it. Depending on the pricing of the new model, I may add it back.
 - USStaff has shut down, so I've removed it.
 - Implemented python logging for better readability and to make troubleshooting easier.
@@ -55,7 +55,7 @@ $ python3 NameSpi.py -h
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| |
  | |\  | (_| | | | | | |  __/___) | |_) | |
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_|
-                                  |_| v1.7
+                                  |_| v1.7.1
              Author: #Waffl3ss
 
 
@@ -110,7 +110,7 @@ $ ./NameSpi.py -li -hio
  |  \| |/ _` | '_ ` _ \ / _ \___ \| '_ \| | 
  | |\  | (_| | | | | | |  __/___) | |_) | | 
  |_| \_|\__,_|_| |_| |_|\___|____/| .__/|_| 
-                                  |_| v1.7
+                                  |_| v1.7.1
              Author: #Waffl3ss
 
 
