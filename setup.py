@@ -1,9 +1,15 @@
 from setuptools import setup, find_packages
+from pathlib import Path
+
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="namespi", 
-    version="1.7.0", 
+    version="1.7.1", 
     description="An OSINT employee/username enumeration tool.",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author="Waffl3ss",
     author_email="name@example.com",
     url="https://github.com/waffl3ss/NameSpi",
