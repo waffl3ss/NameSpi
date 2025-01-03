@@ -347,11 +347,12 @@ def linkedInGen():
 									pass
 								else:
 									linkedInNamesList.append(str(full_name))
-					time.sleep(sleep)
 
 				except Exception as linkedinuserexception:
 					logger.debug(f'LinkedIn user module exception: {linkedinuserexception}')
 					pass
+				time.sleep(sleep)
+
 	except Exception as linkedinexception:
 		logger.debug(f'LinkedIn module exception: {linkedinexception}')
 		pass
