@@ -2,7 +2,7 @@
 
 ### Please make sure to read the README before using NameSpi. 
 
-## I have been learning Go and created a Go version that contains NameSpi as well as JobSpi all in one package. You can find SpiSuite [HERE](https://github.com/waffl3ss/SpiSuite)  
+### I have been learning Go and created a Go version that contains NameSpi as well as JobSpi all in one package. You can find SpiSuite [HERE](https://github.com/waffl3ss/SpiSuite)  
 
 v1.7.1 updates:
 - Phonebook is moving to a paywall, so I've removed it. Depending on the pricing of the new model, I may add it back.
